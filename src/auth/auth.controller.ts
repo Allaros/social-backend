@@ -21,6 +21,9 @@ import { VerificationService } from '@app/verification/verification.service';
 import { JwtAuthGuard } from '@app/guards/auth.guard';
 import { CurrentUser } from '@app/user/decorators/currentUser.decorator';
 import { UserEntity } from '@app/user/user.entity';
+import { GoogleOAuthRequest } from '@app/types/userRequest.interface';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
@@ -28,6 +31,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly verificationService: VerificationService,
+    private readonly configServise: ConfigService,
   ) {}
 
   @Get('me')
@@ -45,7 +49,7 @@ export class AuthController {
     if (!refreshToken) throw new UnauthorizedException();
 
     const { accessToken, refreshToken: newRefreshToken } =
-      await this.authService.refreshAccessToken(refreshToken);
+      await this.authService.refreshAccessToken(refreshToken, req);
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
@@ -61,10 +65,11 @@ export class AuthController {
   @Post('sign-in')
   async authUser(
     @Body() signInData: SignInUserDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<UserResponse> {
     const { user, refreshToken, accessToken } =
-      await this.authService.authorizeUser(signInData);
+      await this.authService.authorizeUser(signInData, req);
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
@@ -81,10 +86,11 @@ export class AuthController {
   @UsePipes(new ValidationPipe())
   async signUp(
     @Body() signUpUserDto: SignUpUserDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<UserResponse> {
     const { user, tempToken, recoveryToken, accessToken, refreshToken } =
-      await this.authService.registerUser(signUpUserDto);
+      await this.authService.registerUser(signUpUserDto, req);
 
     res.cookie('verificationTempToken', tempToken, {
       httpOnly: true,
@@ -152,5 +158,59 @@ export class AuthController {
     });
 
     return { message: 'Новый код отправлен' };
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  async logoutCurrent(
+    @CurrentUser() user: UserEntity,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.logoutCurrent(user.id, req);
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    return { success: true };
+  }
+
+  @Post('logout-all')
+  @UseGuards(JwtAuthGuard)
+  async logoutAll(
+    @CurrentUser() user: UserEntity,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.logoutAll(user.id);
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    return { success: true };
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  async googleOAuth() {}
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleCallback(
+    @Req() req: GoogleOAuthRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, refreshToken, user } =
+      await this.authService.oauthLogin(req.user, req);
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.redirect(this.configServise.get<string>('FRONTEND_URL')!);
   }
 }

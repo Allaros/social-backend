@@ -5,15 +5,19 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
+import { AuthProvider } from './types/Auth.interface';
 
 @Entity('providers')
+@Index(['provider', 'providerId'], { unique: true })
+@Index(['user', 'provider'], { unique: true })
 export class ProviderEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  provider: string;
+  provider: AuthProvider;
 
   @Column()
   providerId: string;
@@ -21,7 +25,7 @@ export class ProviderEntity {
   @ManyToOne(() => UserEntity, (user) => user.providers, {
     onDelete: 'CASCADE',
   })
-  users: UserEntity;
+  user: UserEntity;
 
   @CreateDateColumn()
   createdAt: Date;

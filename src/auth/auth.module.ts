@@ -5,14 +5,16 @@ import { UserModule } from '@app/user/user.module';
 import { VerificationModule } from '@app/verification/verification.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshTokenEntity } from './token.entity';
+import { ProviderEntity } from './provider.entity';
+import { GoogleStrategy } from './google-strategy';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RefreshTokenEntity]),
+    TypeOrmModule.forFeature([RefreshTokenEntity, ProviderEntity]),
     UserModule,
     VerificationModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, GoogleStrategy],
 })
 export class AuthModule {}

@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { SignInUserDto, SignUpUserDto } from './types/Auth.dto';
@@ -15,6 +16,9 @@ import { Repository } from 'typeorm';
 import { sign } from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { randomBytes } from 'crypto';
+import { Request } from 'express';
+import { AuthProvider, GoogleOAuthUser } from './types/Auth.interface';
+import { ProviderEntity } from './provider.entity';
 
 dotenv.config();
 
@@ -23,6 +27,8 @@ export class AuthService {
   constructor(
     @InjectRepository(RefreshTokenEntity)
     private readonly tokenRepository: Repository<RefreshTokenEntity>,
+    @InjectRepository(ProviderEntity)
+    private readonly providerRepo: Repository<ProviderEntity>,
     private readonly userService: UserService,
     private readonly verificationService: VerificationService,
   ) {}
@@ -37,6 +43,41 @@ export class AuthService {
     );
   }
 
+  private async issueTokens(
+    user: UserEntity,
+    req: Request,
+  ): Promise<{ refreshToken: string; accessToken: string }> {
+    const platform =
+      req.get('sec-ch-ua-platform')?.replace(/"/g, '') ?? 'unknown';
+
+    await this.tokenRepository.update(
+      {
+        user: { id: user.id },
+        device: platform,
+        revoked: false,
+      },
+      {
+        revoked: true,
+      },
+    );
+
+    const accessToken = this.generateAccessToken(user);
+
+    const { clientToken: refreshToken, hashedSecret } =
+      await this.generateRefreshToken(user.id);
+
+    await this.tokenRepository.save({
+      token: hashedSecret,
+      user,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      device: platform,
+      userAgent: req.get('user-agent') ?? 'unknown',
+      ip: req.ip,
+    });
+
+    return { refreshToken, accessToken };
+  }
+
   async generateRefreshToken(
     userId: number,
   ): Promise<{ clientToken: string; hashedSecret: string }> {
@@ -49,6 +90,7 @@ export class AuthService {
 
   async refreshAccessToken(
     clientToken: string,
+    req: Request,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const [userIdStr, secret] = clientToken.split('.');
     if (!userIdStr || !secret) throw new UnauthorizedException();
@@ -60,7 +102,7 @@ export class AuthService {
       relations: ['user'],
     });
 
-    let matchedToken: null | RefreshTokenEntity = null;
+    let matchedToken: RefreshTokenEntity | null = null;
 
     for (const tokenEntity of tokens) {
       const match = await bcrypt.compare(secret, tokenEntity.token);
@@ -71,28 +113,52 @@ export class AuthService {
     }
 
     if (!matchedToken) throw new UnauthorizedException();
+
+    if (matchedToken.revoked) {
+      await this.tokenRepository.update(
+        { user: { id: userId }, revoked: false },
+        { revoked: true },
+      );
+
+      throw new UnauthorizedException('Token reuse detected');
+    }
+
     if (matchedToken.expiresAt < new Date()) {
-      await this.tokenRepository.remove(matchedToken);
+      await this.tokenRepository.update(
+        { id: matchedToken.id },
+        { revoked: true },
+      );
+
       throw new UnauthorizedException('Refresh token истёк');
     }
 
     const user = matchedToken.user;
-    const accessToken = this.generateAccessToken(matchedToken.user);
+    await this.tokenRepository.update(
+      { id: matchedToken.id },
+      { revoked: true },
+    );
 
-    await this.tokenRepository.remove(matchedToken);
-
-    const { clientToken: refreshToken, hashedSecret } =
+    const { clientToken: newRefreshToken, hashedSecret } =
       await this.generateRefreshToken(user.id);
+
     await this.tokenRepository.save({
       token: hashedSecret,
       user,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      revoked: false,
+      device: matchedToken.device,
+      userAgent: req.get('user-agent') ?? 'unknown',
+      ip: req.ip,
     });
+    const accessToken = this.generateAccessToken(matchedToken.user);
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken: newRefreshToken };
   }
 
-  async registerUser(dto: SignUpUserDto): Promise<{
+  async registerUser(
+    dto: SignUpUserDto,
+    req: Request,
+  ): Promise<{
     user: UserEntity;
     tempToken: string;
     recoveryToken: string;
@@ -119,6 +185,9 @@ export class AuthService {
       token: hashedSecret,
       user: user,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      device: req.get('sec-ch-ua-platform') ?? 'unknown',
+      userAgent: req.get('user-agent') ?? 'unknown',
+      ip: req.ip,
     });
 
     const { tempToken, recoveryToken } =
@@ -127,16 +196,13 @@ export class AuthService {
     return { user, tempToken, recoveryToken, accessToken, refreshToken };
   }
 
-  async authorizeUser(
-    signInDto: SignInUserDto,
-  ): Promise<{ user: UserEntity; refreshToken: string; accessToken: string }> {
+  async authorizeUser(signInDto: SignInUserDto, req: Request) {
     const user = await this.userService.findByEmail(signInDto.email);
 
     if (!user) throw new UnauthorizedException('Неправильный логин или пароль');
 
     if (!user.isVerified) {
       throw new ForbiddenException({
-        statusCode: 403,
         message: 'Email не верифицирован',
         code: 'EMAIL_NOT_VERIFIED',
       });
@@ -152,20 +218,97 @@ export class AuthService {
 
     if (!isPasswordMatch)
       throw new UnauthorizedException('Неправильный логин или пароль');
+    const tokens = await this.issueTokens(user, req);
 
-    await this.tokenRepository.delete({ user: user });
+    return { user, ...tokens };
+  }
 
-    const accessToken = this.generateAccessToken(user);
+  async oauthLogin(oauthUser: GoogleOAuthUser, req: Request) {
+    const user = await this.validateOAuthLogin(oauthUser);
 
-    const { clientToken: refreshToken, hashedSecret } =
-      await this.generateRefreshToken(user.id);
+    const tokens = await this.issueTokens(user, req);
 
-    await this.tokenRepository.save({
-      token: hashedSecret,
-      user: user,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-    });
+    return { user, ...tokens };
+  }
 
-    return { user, refreshToken, accessToken };
+  async logoutCurrent(userId: number, req: Request): Promise<void> {
+    const platform =
+      req.get('sec-ch-ua-platform')?.replace(/"/g, '') ??
+      req.get('user-agent') ??
+      'unknown';
+
+    await this.tokenRepository.update(
+      {
+        user: { id: userId },
+        device: platform,
+        revoked: false,
+      },
+      {
+        revoked: true,
+      },
+    );
+  }
+
+  async logoutAll(userId: number): Promise<void> {
+    await this.tokenRepository.update(
+      {
+        user: { id: userId },
+        revoked: false,
+      },
+      {
+        revoked: true,
+      },
+    );
+  }
+
+  async validateOAuthLogin(oauthUser: {
+    provider: AuthProvider;
+    providerId: string;
+    email: string;
+  }) {
+    try {
+      const { email, provider, providerId } = oauthUser;
+
+      const existingProvider = await this.providerRepo.findOne({
+        where: { provider, providerId },
+        relations: ['user'],
+      });
+
+      if (existingProvider) {
+        return existingProvider.user;
+      }
+
+      let user = await this.userService.findByEmail(email);
+
+      if (!user) {
+        try {
+          user = await this.userService.createUser(email, undefined, true);
+        } catch (err) {
+          console.error('CREATE USER ERROR:', err);
+          user = await this.userService.findByEmail(email);
+        }
+      }
+
+      if (!user) {
+        throw new InternalServerErrorException('OAuth user resolution failed');
+      }
+
+      if (!user.isVerified) {
+        await this.userService.verifyUser(user);
+      }
+
+      const newProvider = this.providerRepo.create({
+        provider,
+        providerId,
+        user,
+      });
+
+      await this.providerRepo.save(newProvider);
+
+      return user;
+    } catch (error) {
+      console.error('VALIDATE OAUTH ERROR:', error);
+      throw error;
+    }
   }
 }

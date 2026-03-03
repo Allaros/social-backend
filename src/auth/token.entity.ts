@@ -21,6 +21,15 @@ export class RefreshTokenEntity {
   @Column({ default: false })
   revoked: boolean;
 
+  @Column({ nullable: true })
+  device: string;
+
+  @Column({ nullable: true })
+  userAgent: string;
+
+  @Column({ nullable: true })
+  ip: string;
+
   @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE' })
   user: UserEntity;
 

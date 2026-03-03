@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
+import { GlobalExceptionFilter } from './filters/error.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,6 +14,7 @@ async function bootstrap() {
   });
   app.setGlobalPrefix('api');
   app.use(cookieParser());
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   await app.listen(port);
 }

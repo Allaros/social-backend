@@ -34,7 +34,7 @@ export class UserEntity {
   @OneToMany(() => VerificationEntity, (ev) => ev.user)
   emailVerifications: VerificationEntity[];
 
-  @OneToMany(() => ProviderEntity, (provider) => provider.users)
+  @OneToMany(() => ProviderEntity, (provider) => provider.user)
   providers: ProviderEntity[];
 
   @OneToMany(() => RefreshTokenEntity, (token) => token.user)
