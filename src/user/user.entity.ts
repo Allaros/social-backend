@@ -1,4 +1,6 @@
 import { ProviderEntity } from '@app/auth/provider.entity';
+import { RefreshTokenEntity } from '@app/auth/token.entity';
+import { PasswordRecoveryEntity } from '@app/passwordRecovery/passwordRecovery.entity';
 import { VerificationEntity } from '@app/verification/verification.entity';
 import {
   Column,
@@ -34,4 +36,10 @@ export class UserEntity {
 
   @OneToMany(() => ProviderEntity, (provider) => provider.users)
   providers: ProviderEntity[];
+
+  @OneToMany(() => RefreshTokenEntity, (token) => token.user)
+  refreshTokens: RefreshTokenEntity[];
+
+  @OneToMany(() => PasswordRecoveryEntity, (token) => token.user)
+  passwordRecoveries: PasswordRecoveryEntity[];
 }

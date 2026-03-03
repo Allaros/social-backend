@@ -19,8 +19,12 @@ export class MailerService {
     await this.mailerService.sendMail({
       to: email,
       subject: 'Сброс пароля',
-      template: 'reset-password',
-      context: { link },
+      html: `
+        <h1>Сброс пароля</h1>
+        <p>Чтобы сбросить пароль, перейдите по ссылке ниже:</p>
+        <p><a href="${link}">${link}</a></p>
+        <p>Ссылка действительна 5 минут.</p>
+      `,
     });
   }
 }

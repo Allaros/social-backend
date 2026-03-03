@@ -7,21 +7,20 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 
-@Entity('tokens')
-export class RefreshTokenEntity {
+@Entity('password_recoveries')
+export class PasswordRecoveryEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   token: string;
 
   @Column()
   expiresAt: Date;
 
-  @Column({ default: false })
-  revoked: boolean;
-
-  @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, (user) => user.passwordRecoveries, {
+    onDelete: 'CASCADE',
+  })
   user: UserEntity;
 
   @CreateDateColumn()

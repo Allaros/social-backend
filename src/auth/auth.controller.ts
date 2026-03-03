@@ -2,10 +2,13 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   Post,
   Put,
   Req,
   Res,
+  UnauthorizedException,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -15,6 +18,9 @@ import { UserService } from '@app/user/user.service';
 import { UserResponse } from '@app/user/types/User.interface';
 import { Response, Request } from 'express';
 import { VerificationService } from '@app/verification/verification.service';
+import { JwtAuthGuard } from '@app/guards/auth.guard';
+import { CurrentUser } from '@app/user/decorators/currentUser.decorator';
+import { UserEntity } from '@app/user/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -24,9 +30,50 @@ export class AuthController {
     private readonly verificationService: VerificationService,
   ) {}
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getUser(@CurrentUser() user: UserEntity) {
+    return this.userService.buildUserResponse(user);
+  }
+
+  @Post('refresh')
+  async refreshTokens(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies['refreshToken'] as string;
+    if (!refreshToken) throw new UnauthorizedException();
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.authService.refreshAccessToken(refreshToken);
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    return { success: true };
+  }
+
   @Post('sign-in')
-  async authUser(@Body() signInData: SignInUserDto): Promise<UserResponse> {
-    const user = await this.authService.authorizeUser(signInData);
+  async authUser(
+    @Body() signInData: SignInUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<UserResponse> {
+    const { user, refreshToken, accessToken } =
+      await this.authService.authorizeUser(signInData);
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     return this.userService.buildUserResponse(user);
   }
 
@@ -36,7 +83,7 @@ export class AuthController {
     @Body() signUpUserDto: SignUpUserDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<UserResponse> {
-    const { user, tempToken, recoveryToken } =
+    const { user, tempToken, recoveryToken, accessToken, refreshToken } =
       await this.authService.registerUser(signUpUserDto);
 
     res.cookie('verificationTempToken', tempToken, {
@@ -44,6 +91,14 @@ export class AuthController {
       maxAge: 10 * 60 * 1000,
     });
     res.cookie('verificationRecoveryToken', recoveryToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -67,6 +122,7 @@ export class AuthController {
     );
 
     res.clearCookie('verificationTempToken');
+    res.clearCookie('verificationRecoveryToken');
 
     return this.userService.buildUserResponse(verifiedUser);
   }

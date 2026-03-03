@@ -21,7 +21,7 @@ export class VerificationService {
     return code.toString().padStart(4, '0');
   }
 
-  private generateTempToken(length: number) {
+  generateToken(length: number) {
     return randomBytes(length).toString('hex');
   }
 
@@ -40,8 +40,8 @@ export class VerificationService {
     user: UserEntity,
   ): Promise<{ tempToken: string; recoveryToken: string }> {
     const code = this.generateVerificationCode();
-    const tempToken = this.generateTempToken(16);
-    const recoveryToken = this.generateTempToken(32);
+    const tempToken = this.generateToken(16);
+    const recoveryToken = this.generateToken(32);
     const recoveryExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const tempExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -95,7 +95,7 @@ export class VerificationService {
       throw new ForbiddenException('Нельзя отправить новый код');
     }
 
-    const newTempToken = this.generateTempToken(16);
+    const newTempToken = this.generateToken(16);
     const newCode = this.generateVerificationCode();
     verification.tempToken = newTempToken;
     verification.code = newCode;
