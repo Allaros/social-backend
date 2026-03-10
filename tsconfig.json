@@ -24,6 +24,6 @@
       "@app/*": ["src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/auth.controller.spec.ts"],
   "exclude": ["node_modules", "dist", "test"]
 }
