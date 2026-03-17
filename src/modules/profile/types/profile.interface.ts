@@ -6,11 +6,10 @@ export interface CreateProfileInput {
 
 export interface ProfileResponce {
   name: string;
-  nickname?: string;
+  username?: string;
   followingCount: number;
   postsCount: number;
   followersCount: number;
   avatarUrl?: string;
   bio?: string;
-  slug: string;
 }

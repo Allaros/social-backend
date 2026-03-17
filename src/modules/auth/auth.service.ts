@@ -16,7 +16,7 @@ import { UserEntity } from '../user/user.entity';
 import { ProfileService } from '../profile/profile.service';
 import { SessionEntity } from './session.entity';
 import { sign } from 'jsonwebtoken';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, createHmac, randomBytes, randomUUID } from 'crypto';
 import {
   ChangePasswordDto,
   SignInUserDto,
@@ -202,7 +202,7 @@ export class AuthService {
       {
         email: dto.email,
         provider: AuthProvider.PASSWORD,
-        providerId: dto.email,
+        providerId: randomUUID(),
         profile: {
           name: dto.name,
           username: dto.username,
@@ -226,23 +226,32 @@ export class AuthService {
     );
   }
 
+  private magicProviderId(userId: string) {
+    const secret = this.configService.get<string>('MAGIC_PROVIDER_SECRET');
+
+    if (!secret) {
+      throw new Error('MAGIC_PROVIDER_SECRET is not defined');
+    }
+    return createHmac('sha256', secret).update(userId).digest('hex');
+  }
+
   async loginWithMagicLink(token: string, req: Request) {
     const verification = await this.verificationService.verifyVerification(
       token,
       VerificationType.MAGIC_LINK,
     );
 
-    const email = verification.email ?? verification.user?.email;
+    const user = verification.user;
 
-    if (!email) {
-      throw new ForbiddenException('Email not found for verification');
+    if (!user) {
+      throw new ForbiddenException('User not found for verification');
     }
 
     return this.registerWithProvider(
       {
-        email,
+        email: user.email,
         provider: AuthProvider.MAGIC,
-        providerId: email.toLowerCase(),
+        providerId: this.magicProviderId(`${user.id}`),
         isVerified: true,
       },
       req,

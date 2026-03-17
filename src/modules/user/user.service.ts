@@ -112,8 +112,7 @@ export class UserService {
       profile: response.profile
         ? {
             name: response.profile.name,
-            nickname: response.profile.nickname,
-            slug: response.profile.slug,
+            username: response.profile.username,
             followersCount: response.profile.followersCount,
             followingCount: response.profile.followingCount,
             postsCount: response.profile.postsCount,

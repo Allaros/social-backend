@@ -25,11 +25,7 @@ export class ProfileEntity {
 
   @Index({ unique: true })
   @Column({ length: 50 })
-  nickname: string;
-
-  @Index({ unique: true })
-  @Column({ length: 120 })
-  slug: string;
+  username: string;
 
   @Column({ length: 100 })
   name: string;

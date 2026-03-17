@@ -9,6 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppDataSource } from './data-source';
+import { SearchModule } from './modules/search/search.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AppDataSource } from './data-source';
       autoLoadEntities: true,
     }),
     AuthModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [
