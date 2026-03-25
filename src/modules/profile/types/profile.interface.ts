@@ -5,6 +5,7 @@ export interface CreateProfileInput {
 }
 
 export interface ProfileResponce {
+  id: number;
   name: string;
   username?: string;
   followingCount: number;

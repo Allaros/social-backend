@@ -111,6 +111,7 @@ export class UserService {
       isVerified: response.isVerified,
       profile: response.profile
         ? {
+            id: response.profile.id,
             name: response.profile.name,
             username: response.profile.username,
             followersCount: response.profile.followersCount,

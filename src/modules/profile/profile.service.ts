@@ -11,6 +11,7 @@ import { UserEntity } from '@app/modules/user/user.entity';
 import { isPostgresUniqueViolation } from './handlers/errorHandlers';
 import { CreateProfileInput } from './types/profile.interface';
 import { nanoid } from 'nanoid';
+import { UpdateProfileDto } from './types/profile.dto';
 
 @Injectable()
 export class ProfileService {
@@ -176,5 +177,39 @@ export class ProfileService {
       data: profiles,
       total,
     };
+  }
+
+  async updateProfile(
+    userId: number,
+    body: UpdateProfileDto,
+    image: string | null,
+  ) {
+    const profile = await this.profileRepository.findOne({ where: { userId } });
+
+    if (!profile) throw new NotFoundException('Профиль не найден');
+
+    body.username = body.username?.toLowerCase().trim();
+
+    if (body.username && body.username !== profile.username) {
+      const existing = await this.profileRepository.findOne({
+        where: { username: body.username },
+      });
+      if (existing) throw new ConflictException('Username уже занят');
+    }
+
+    type ProfileKeys = keyof UpdateProfileDto;
+
+    (Object.keys(body) as ProfileKeys[]).forEach((key) => {
+      const value = body[key];
+      if (value !== undefined) {
+        profile[key] = value;
+      }
+    });
+
+    if (image) {
+      profile.avatarUrl = image;
+    }
+
+    return await this.profileRepository.save(profile);
   }
 }

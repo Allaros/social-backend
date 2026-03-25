@@ -29,12 +29,12 @@ import { UserResponse } from '@app/modules/user/types/User.interface';
 import { Response, Request } from 'express';
 import { VerificationService } from '@app/modules/verification/verification.service';
 import { JwtAuthGuard } from '@app/modules/auth/guards/auth.guard';
-import { CurrentUser } from '@app/common/decorators/currentUser.decorator';
+import { CurrentUser } from '@app/shared/decorators/currentUser.decorator';
 import { UserEntity } from '@app/modules/user/user.entity';
 import {
   AuthRequest,
   GoogleOAuthRequest,
-} from '@app/common/types/request.interface';
+} from '@app/shared/types/request.interface';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { VerificationType } from '../verification/types/verification.interface';
@@ -258,7 +258,6 @@ export class AuthController {
   @Post('change-password')
   @UsePipes(new ValidationPipe())
   async changePassword(@Body() dto: ChangePasswordDto) {
-    console.log(dto);
     await this.authService.changeUserPassword(dto);
   }
 

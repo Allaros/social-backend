@@ -1,12 +1,32 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  InternalServerErrorException,
+  Param,
+  Put,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { EmailVerifiedGuard } from '../auth/guards/email-verified.guard';
-import { CurrentUser } from '@app/common/decorators/currentUser.decorator';
+import { CurrentUser } from '@app/shared/decorators/currentUser.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UpdateProfileDto } from './types/profile.dto';
+import { DiskMulterFile } from '../file/types/file.interface';
+import { FileService } from '../file/file.service';
+import { UserEntity } from '../user/user.entity';
 
 @Controller('profile')
 export class ProfileController {
-  constructor(private readonly profileService: ProfileService) {}
+  constructor(
+    private readonly profileService: ProfileService,
+    private readonly fileService: FileService,
+  ) {}
 
   @Get(':username')
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
@@ -18,5 +38,38 @@ export class ProfileController {
       await this.profileService.findProfileByUsername(username, userId);
 
     return this.profileService.buildProfileResponse(profile, isOwner);
+  }
+
+  @Put('update')
+  @UseInterceptors(FileInterceptor('image'))
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  @UsePipes(new ValidationPipe())
+  async updateProfile(
+    @Body() body: UpdateProfileDto,
+    @CurrentUser() user: UserEntity,
+    @UploadedFile() image?: DiskMulterFile,
+  ) {
+    let avatarUrl: string | null = null;
+    console.log(image);
+    try {
+      if (image) {
+        avatarUrl = await this.fileService.replaceAvatar(
+          `${user.profile.id}`,
+          image.buffer,
+          user.profile.avatarUrl,
+        );
+      }
+    } catch (err) {
+      console.log(err);
+      throw new InternalServerErrorException('Ошибка при загрузке аватара');
+    }
+
+    const updateProfile = await this.profileService.updateProfile(
+      user.id,
+      body,
+      avatarUrl,
+    );
+
+    return this.profileService.buildProfileResponse(updateProfile, true);
   }
 }

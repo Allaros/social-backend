@@ -7,8 +7,14 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { UserEntity } from '@app/modules/user/user.entity';
+import { PostEntity } from '../post/entities/post.entity';
+import { CommentEntity } from '../post/entities/comment.entity';
+import { PostRepostEntity } from '../post/entities/repost.entity';
+import { LikesEntity } from '../post/entities/like.entity';
+import { SavedPostEntity } from '../post/entities/saved_posts';
 
 @Entity('profiles')
 export class ProfileEntity {
@@ -44,6 +50,21 @@ export class ProfileEntity {
 
   @Column({ default: 0 })
   followingCount: number;
+
+  @OneToMany(() => PostEntity, (post) => post.profile)
+  posts: PostEntity[];
+
+  @OneToMany(() => CommentEntity, (comment) => comment.profile)
+  comments: CommentEntity[];
+
+  @OneToMany(() => PostRepostEntity, (repost) => repost.profile)
+  reposts: PostRepostEntity[];
+
+  @OneToMany(() => LikesEntity, (like) => like.profile)
+  likes: LikesEntity[];
+
+  @OneToMany(() => SavedPostEntity, (saved) => saved.profile)
+  savedPosts: SavedPostEntity[];
 
   @CreateDateColumn()
   createdAt: Date;

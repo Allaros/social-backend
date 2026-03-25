@@ -97,7 +97,7 @@ export class AuthService {
         ORDER BY "createdAt" ASC
         OFFSET :limit
       )
-    `,
+        `,
       )
       .setParameters({
         userId: user.id,

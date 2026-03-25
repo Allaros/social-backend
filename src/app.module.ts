@@ -10,6 +10,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppDataSource } from './data-source';
 import { SearchModule } from './modules/search/search.module';
+import { PostModule } from './modules/post/post.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { SearchModule } from './modules/search/search.module';
     }),
     AuthModule,
     SearchModule,
+    PostModule,
   ],
   controllers: [AppController],
   providers: [

@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
-import { GlobalExceptionFilter } from './common/filters/error.filter';
+import { GlobalExceptionFilter } from './shared/filters/error.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

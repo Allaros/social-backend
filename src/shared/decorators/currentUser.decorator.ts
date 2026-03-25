@@ -1,4 +1,4 @@
-import { AuthRequest } from '@app/common/types/request.interface';
+import { AuthRequest } from '@app/shared/types/request.interface';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 export const CurrentUser = createParamDecorator(

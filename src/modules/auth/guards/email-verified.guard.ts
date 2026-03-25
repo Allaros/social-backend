@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { AuthRequest } from '@app/common/types/request.interface';
+import { AuthRequest } from '@app/shared/types/request.interface';
 
 @Injectable()
 export class EmailVerifiedGuard implements CanActivate {
