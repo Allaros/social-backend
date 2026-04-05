@@ -14,3 +14,7 @@ export interface UploadedMedia {
   size: number;
   previewUrl?: string;
 }
+
+export type Bucket = 'post-media' | 'avatars';
+
+export type Format = 'webp' | 'mp4';

@@ -11,10 +11,10 @@ import {
 } from 'typeorm';
 import { ProfileEntity } from '../../profile/profile.entity';
 import { CommentEntity } from './comment.entity';
-import { LikesEntity } from './like.entity';
 import { PostRepostEntity } from './repost.entity';
 import { PostMediaEntity } from './media.entity';
-import { SavedPostEntity } from './saved_posts';
+import { SavedPostEntity } from '../../post-saving/entities/saved_posts.entity';
+import { LikesEntity } from '@app/modules/post-like/entities/like.entity';
 
 @Index(['createdAt'])
 @Index(['profileId', 'createdAt'])
@@ -31,6 +31,9 @@ export class PostEntity {
 
   @OneToMany(() => SavedPostEntity, (saved) => saved.post)
   savedBy: SavedPostEntity[];
+
+  @Column({ default: 0 })
+  savingsCount: number;
 
   @Column({ default: 0 })
   viewsCount: number;
@@ -72,6 +75,9 @@ export class PostEntity {
   @Index()
   @Column()
   profileId: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt?: Date;
 
   @CreateDateColumn()
   createdAt: Date;

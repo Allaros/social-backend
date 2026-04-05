@@ -5,7 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { PostEntity } from './post.entity';
+import { PostEntity } from '@app/modules/post/entities/post.entity';
 
 @Entity('saved_posts')
 export class SavedPostEntity {

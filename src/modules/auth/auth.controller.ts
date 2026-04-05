@@ -49,6 +49,17 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  private setCookieOptions(maxAgeMinutes: number) {
+    return {
+      httpOnly: true,
+      maxAge: maxAgeMinutes * 60 * 1000,
+      sameSite: this.configService.get<'lax' | 'none' | 'strict'>(
+        'COOKIE_SAME_SITE',
+      ),
+      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
+    };
+  }
+
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('sign-up')
   @UsePipes(new ValidationPipe())
@@ -66,21 +77,17 @@ export class AuthController {
         user,
       );
 
-    res.cookie('verificationToken', verificationToken, {
-      httpOnly: true,
-      maxAge: 10 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      maxAge: 20 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
+    res.cookie(
+      'verificationToken',
+      verificationToken,
+      this.setCookieOptions(15),
+    );
+    res.cookie('accessToken', accessToken, this.setCookieOptions(20));
+    res.cookie(
+      'refreshToken',
+      refreshToken,
+      this.setCookieOptions(7 * 24 * 60),
+    );
 
     return this.userService.buildUserResponse(user);
   }
@@ -141,11 +148,11 @@ export class AuthController {
     const verificationToken =
       await this.verificationService.createNewVerification(sendType, user);
 
-    res.cookie('verificationToken', verificationToken, {
-      httpOnly: true,
-      maxAge: 10 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
+    res.cookie(
+      'verificationToken',
+      verificationToken,
+      this.setCookieOptions(15),
+    );
 
     return { success: true };
   }
@@ -172,16 +179,12 @@ export class AuthController {
     const { user, accessToken, refreshToken } =
       await this.authService.loginWithMagicLink(dto.token, req);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      maxAge: 20 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
+    res.cookie('accessToken', accessToken, this.setCookieOptions(20));
+    res.cookie(
+      'refreshToken',
+      refreshToken,
+      this.setCookieOptions(7 * 24 * 60),
+    );
 
     return this.userService.buildUserResponse(user);
   }
@@ -199,16 +202,12 @@ export class AuthController {
     const { accessToken, refreshToken } =
       await this.authService.registerWithGoogle(req.user, req);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      maxAge: 20 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
+    res.cookie('accessToken', accessToken, this.setCookieOptions(20));
+    res.cookie(
+      'refreshToken',
+      refreshToken,
+      this.setCookieOptions(7 * 24 * 60),
+    );
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     if (!frontendUrl)
@@ -228,23 +227,19 @@ export class AuthController {
     const { user, refreshToken, accessToken, verificationToken } =
       await this.authService.authorizeUser(signInData, req);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      maxAge: 20 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
+    res.cookie('accessToken', accessToken, this.setCookieOptions(20));
+    res.cookie(
+      'refreshToken',
+      refreshToken,
+      this.setCookieOptions(7 * 24 * 60),
+    );
 
     if (verificationToken) {
-      res.cookie('verificationToken', verificationToken, {
-        httpOnly: true,
-        maxAge: 10 * 60 * 1000,
-        secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-      });
+      res.cookie(
+        'verificationToken',
+        verificationToken,
+        this.setCookieOptions(15),
+      );
 
       throw new UnauthorizedException({
         code: 'EMAIL_IS_NOT_VERIFIED',
@@ -276,16 +271,12 @@ export class AuthController {
       req,
     );
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      maxAge: 20 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      secure: this.configService.get<string>('COOKIE_SECURE') === 'true',
-    });
+    res.cookie('accessToken', accessToken, this.setCookieOptions(20));
+    res.cookie(
+      'refreshToken',
+      refreshToken,
+      this.setCookieOptions(7 * 24 * 60),
+    );
     return { success: true };
   }
 

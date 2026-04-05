@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  forwardRef,
   Get,
+  Inject,
   InternalServerErrorException,
   Param,
   Put,
@@ -18,14 +20,15 @@ import { CurrentUser } from '@app/shared/decorators/currentUser.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateProfileDto } from './types/profile.dto';
 import { DiskMulterFile } from '../file/types/file.interface';
-import { FileService } from '../file/file.service';
 import { UserEntity } from '../user/user.entity';
+import { ReplaceAvatarUseCase } from '../file/use-cases/replace-avatar.usecase';
 
 @Controller('profile')
 export class ProfileController {
   constructor(
     private readonly profileService: ProfileService,
-    private readonly fileService: FileService,
+    @Inject(forwardRef(() => ReplaceAvatarUseCase))
+    private readonly replaceAvatarUseCase: ReplaceAvatarUseCase,
   ) {}
 
   @Get(':username')
@@ -53,8 +56,8 @@ export class ProfileController {
     console.log(image);
     try {
       if (image) {
-        avatarUrl = await this.fileService.replaceAvatar(
-          `${user.profile.id}`,
+        avatarUrl = await this.replaceAvatarUseCase.execute(
+          user.profile.id,
           image.buffer,
           user.profile.avatarUrl,
         );

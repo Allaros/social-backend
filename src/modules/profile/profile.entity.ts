@@ -13,8 +13,8 @@ import { UserEntity } from '@app/modules/user/user.entity';
 import { PostEntity } from '../post/entities/post.entity';
 import { CommentEntity } from '../post/entities/comment.entity';
 import { PostRepostEntity } from '../post/entities/repost.entity';
-import { LikesEntity } from '../post/entities/like.entity';
-import { SavedPostEntity } from '../post/entities/saved_posts';
+import { SavedPostEntity } from '../post-saving/entities/saved_posts.entity';
+import { LikesEntity } from '../post-like/entities/like.entity';
 
 @Entity('profiles')
 export class ProfileEntity {

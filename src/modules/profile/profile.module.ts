@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { ProfileController } from './profile.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -6,7 +6,10 @@ import { ProfileEntity } from './profile.entity';
 import { FileModule } from '../file/file.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProfileEntity]), FileModule],
+  imports: [
+    TypeOrmModule.forFeature([ProfileEntity]),
+    forwardRef(() => FileModule),
+  ],
   controllers: [ProfileController],
   providers: [ProfileService],
   exports: [ProfileService],

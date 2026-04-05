@@ -11,6 +11,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { AppDataSource } from './data-source';
 import { SearchModule } from './modules/search/search.module';
 import { PostModule } from './modules/post/post.module';
+import { FeedModule } from './modules/feed/feed.module';
+import { PostCounterModule } from './modules/post-counters/post-counter.module';
+import { PostLikeModule } from './modules/post-like/post-like.module';
+import { PostSavingModule } from './modules/post-saving/post-saving.module';
 
 @Module({
   imports: [
@@ -33,6 +37,10 @@ import { PostModule } from './modules/post/post.module';
     AuthModule,
     SearchModule,
     PostModule,
+    PostCounterModule,
+    PostLikeModule,
+    PostSavingModule,
+    FeedModule,
   ],
   controllers: [AppController],
   providers: [

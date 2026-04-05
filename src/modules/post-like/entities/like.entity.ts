@@ -7,8 +7,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { PostEntity } from './post.entity';
+
 import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { PostEntity } from '@app/modules/post/entities/post.entity';
 
 @Entity('post_likes')
 @Index(['profileId', 'postId'], { unique: true })

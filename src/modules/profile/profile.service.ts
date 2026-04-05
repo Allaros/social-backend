@@ -34,6 +34,27 @@ export class ProfileService {
     return `${base}-${suffix}`;
   }
 
+  async incrementPostsCount(profileId: number, manager: EntityManager) {
+    await manager.increment(ProfileEntity, { id: profileId }, 'postsCount', 1);
+  }
+
+  async decrementPostsCount(profileId: number, manager: EntityManager) {
+    await manager.decrement(ProfileEntity, { id: profileId }, 'postsCount', 1);
+  }
+
+  async replaceAvatarUrl(profileId: number, avatarUrl: string) {
+    const result = await this.profileRepository.update(
+      { id: profileId },
+      { avatarUrl },
+    );
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    return avatarUrl;
+  }
+
   async createProfile(
     user: UserEntity,
     input: CreateProfileInput,
@@ -96,6 +117,7 @@ export class ProfileService {
 
   buildProfileResponse(profile: ProfileEntity, isOwner: boolean) {
     return {
+      id: profile.id,
       isOwner,
       avatarUrl: profile.avatarUrl,
       bio: profile.bio,
