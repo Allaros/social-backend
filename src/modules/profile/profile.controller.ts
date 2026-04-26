@@ -53,7 +53,6 @@ export class ProfileController {
     @UploadedFile() image?: DiskMulterFile,
   ) {
     let avatarUrl: string | null = null;
-    console.log(image);
     try {
       if (image) {
         avatarUrl = await this.replaceAvatarUseCase.execute(

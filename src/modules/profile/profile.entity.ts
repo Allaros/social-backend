@@ -11,10 +11,9 @@ import {
 } from 'typeorm';
 import { UserEntity } from '@app/modules/user/user.entity';
 import { PostEntity } from '../post/entities/post.entity';
-import { CommentEntity } from '../post/entities/comment.entity';
 import { PostRepostEntity } from '../post/entities/repost.entity';
 import { SavedPostEntity } from '../post-saving/entities/saved_posts.entity';
-import { LikesEntity } from '../post-like/entities/like.entity';
+import { CommentEntity } from '../post-comments/entities/comment.entity';
 
 @Entity('profiles')
 export class ProfileEntity {
@@ -59,9 +58,6 @@ export class ProfileEntity {
 
   @OneToMany(() => PostRepostEntity, (repost) => repost.profile)
   reposts: PostRepostEntity[];
-
-  @OneToMany(() => LikesEntity, (like) => like.profile)
-  likes: LikesEntity[];
 
   @OneToMany(() => SavedPostEntity, (saved) => saved.profile)
   savedPosts: SavedPostEntity[];

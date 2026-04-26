@@ -8,11 +8,11 @@ import {
 import { DataSource } from 'typeorm';
 import { PostService } from '../services/post.service';
 import { CreatePostBody } from '../types/post.interface';
-import sanitizeHtml from 'sanitize-html';
 import { ProfileService } from '@app/modules/profile/profile.service';
 import { PostMediaService } from '@app/modules/post-media/services/post-media.service';
 import { UploadMediaUseCase } from '@app/modules/file/use-cases/upload-media.usecase';
 import { DeleteMediaUseCase } from '@app/modules/file/use-cases/delete-media.usecase';
+import { processContent } from '../helpers/process-content';
 
 @Injectable()
 export class CreatePostUseCase {
@@ -36,7 +36,7 @@ export class CreatePostUseCase {
       throw new BadRequestException('Нельзя создать пустой пост');
     }
 
-    const safeContent = this.processContent(dto.content);
+    const safeContent = processContent(dto.content);
 
     try {
       if (files?.length) {
@@ -81,24 +81,5 @@ export class CreatePostUseCase {
 
       throw new InternalServerErrorException('Не удалось создать пост');
     }
-  }
-
-  private stripHtml(html: string): string {
-    return html.replace(/<[^>]*>/g, '').trim();
-  }
-
-  private processContent(content?: string) {
-    if (!content) return '';
-
-    const text = this.stripHtml(content);
-
-    if (text.length < 5) {
-      throw new BadRequestException('Текст должен быть не короче 5 символов');
-    }
-
-    return sanitizeHtml(content, {
-      allowedTags: ['p', 'b', 'i', 'strong', 'em', 'ul', 'ol', 'li', 'br'],
-      allowedAttributes: {},
-    });
   }
 }

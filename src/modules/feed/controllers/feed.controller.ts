@@ -43,7 +43,6 @@ export class FeedController {
     @Param('id', ParseIntPipe) targetProfileId: number,
     @Query() query: PaginationDto,
   ) {
-    console.log(user, targetProfileId, query);
     return await this.getProfilePostsUseCase.execute(
       user.profile.id,
       targetProfileId,

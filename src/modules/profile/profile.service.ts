@@ -12,6 +12,7 @@ import { isPostgresUniqueViolation } from './handlers/errorHandlers';
 import { CreateProfileInput } from './types/profile.interface';
 import { nanoid } from 'nanoid';
 import { UpdateProfileDto } from './types/profile.dto';
+import { SearchResult } from '../search/types/search.interface';
 
 @Injectable()
 export class ProfileService {
@@ -103,7 +104,6 @@ export class ProfileService {
     username: string,
     userId: number,
   ): Promise<{ profile: ProfileEntity; isOwner: boolean }> {
-    console.log(username);
     const profile = await this.profileRepository.findOne({
       where: { username: username.toLowerCase().trim() },
     });
@@ -133,7 +133,7 @@ export class ProfileService {
     query: string,
     limit: number = 10,
     page?: number,
-  ): Promise<{ data: ProfileEntity[]; total: number | null }> {
+  ): Promise<SearchResult<ProfileEntity>> {
     limit = Math.min(limit, 50);
 
     const rawQuery = query.trim();
@@ -147,7 +147,7 @@ export class ProfileService {
           'profile.avatarUrl',
           'profile.bio',
         ]
-      : ['profile.id', 'profile.name', 'profile.username'];
+      : ['profile.id', 'profile.name', 'profile.username', 'profile.avatarUrl'];
 
     const qb = this.profileRepository
       .createQueryBuilder('profile')
@@ -188,7 +188,15 @@ export class ProfileService {
 
     if (!page) {
       const profiles = await qb.limit(limit).getMany();
-      return { data: profiles, total: null };
+
+      return {
+        data: profiles,
+        meta: {
+          total: null,
+          page: null,
+          limit,
+        },
+      };
     }
 
     qb.limit(limit).offset((page - 1) * limit);
@@ -197,7 +205,11 @@ export class ProfileService {
 
     return {
       data: profiles,
-      total,
+      meta: {
+        total,
+        page,
+        limit,
+      },
     };
   }
 

@@ -1,3 +1,4 @@
+import { PostEntity } from '@app/modules/post/entities/post.entity';
 import {
   Column,
   CreateDateColumn,
@@ -8,7 +9,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { PostEntity } from './post.entity';
 
 export type MediaType = 'image' | 'video' | 'audio' | 'file';
 

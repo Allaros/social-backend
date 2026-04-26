@@ -7,6 +7,8 @@ import {
 import { DataSource } from 'typeorm';
 import { PostService } from '../services/post.service';
 import { DeleteMediaUseCase } from '@app/modules/file/use-cases/delete-media.usecase';
+import { LikeService } from '@app/modules/like/services/like.service';
+import { LikeTargetType } from '@app/modules/like/types/like.interface';
 
 @Injectable()
 export class HardDeletePostUseCase {
@@ -14,6 +16,7 @@ export class HardDeletePostUseCase {
     private readonly dataSource: DataSource,
     private readonly postService: PostService,
     private readonly deleteMediaUseCase: DeleteMediaUseCase,
+    private readonly likeService: LikeService,
   ) {}
   async execute(postId: number, profileId: number) {
     let mediaToDelete: { url: string }[] = [];
@@ -28,6 +31,12 @@ export class HardDeletePostUseCase {
         );
 
       mediaToDelete = post.media.map((m) => ({ url: m.url })) || [];
+
+      await this.likeService.deleteByTarget({
+        targetId: post.id,
+        targetType: LikeTargetType.POST,
+        manager,
+      });
 
       await this.postService.postDelete(post, manager);
 

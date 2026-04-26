@@ -40,3 +40,11 @@ export type PostIdRow = {
   post_id: number;
   post_createdAt: Date;
 };
+
+export interface PostSearchRow {
+  post_id: number;
+  post_createdAt: Date;
+  prefix_match: number;
+  similarity_score: number;
+  rank_score: number;
+}

@@ -12,6 +12,7 @@ export function buildPostResponse(
       id: post.id,
       content: post.content,
       createdAt: post.createdAt,
+      isEdited: post.isEdited,
       allowComments: post.allowComments,
       visibility: post.visibility,
 

@@ -7,6 +7,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { PostVisibility } from './post.interface';
 
 export class CreatePostDto {
   @IsString()
@@ -18,8 +19,8 @@ export class CreatePostDto {
   @IsBoolean()
   allowComments: boolean;
 
-  @IsEnum(['public', 'followers', 'private'])
-  visibility: 'public' | 'followers' | 'private';
+  @IsEnum(PostVisibility)
+  visibility: PostVisibility;
 }
 
 export class EditPostDto {
@@ -32,8 +33,8 @@ export class EditPostDto {
   @IsBoolean()
   allowComments: boolean;
 
-  @IsEnum(['public', 'followers', 'private'])
-  visibility: 'public' | 'followers' | 'private';
+  @IsEnum(PostVisibility)
+  visibility: PostVisibility;
 
   @IsOptional()
   @IsArray()

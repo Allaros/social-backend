@@ -14,6 +14,14 @@ export class PostService {
     return manager.save(PostEntity, data);
   }
 
+  async update(
+    postId: number,
+    payload: Partial<PostEntity>,
+    manager: EntityManager,
+  ) {
+    return await manager.update(PostEntity, { id: postId }, { ...payload });
+  }
+
   async findById(postId: number, manager?: EntityManager) {
     const repo = manager
       ? manager.getRepository(PostEntity)

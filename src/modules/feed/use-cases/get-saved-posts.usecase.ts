@@ -25,7 +25,12 @@ export class GetSavedPostsUseCase {
 
     return {
       posts,
-      nextCursor: nextCursor ? encodeCursor(nextCursor) : null,
+      nextCursor: nextCursor
+        ? encodeCursor({
+            createdAt: nextCursor.createdAt.toISOString(),
+            id: nextCursor.id,
+          })
+        : null,
     };
   }
 }

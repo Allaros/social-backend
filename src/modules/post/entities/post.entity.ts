@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -10,11 +11,10 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ProfileEntity } from '../../profile/profile.entity';
-import { CommentEntity } from './comment.entity';
+import { SavedPostEntity } from '@app/modules/post-saving/entities/saved_posts.entity';
+import { PostMediaEntity } from '@app/modules/post-media/entities/media.entity';
 import { PostRepostEntity } from './repost.entity';
-import { PostMediaEntity } from './media.entity';
-import { SavedPostEntity } from '../../post-saving/entities/saved_posts.entity';
-import { LikesEntity } from '@app/modules/post-like/entities/like.entity';
+import { CommentEntity } from '@app/modules/post-comments/entities/comment.entity';
 
 @Index(['createdAt'])
 @Index(['profileId', 'createdAt'])
@@ -28,6 +28,9 @@ export class PostEntity {
 
   @OneToMany(() => PostMediaEntity, (media) => media.post, { cascade: true })
   media: PostMediaEntity[];
+
+  @Column({ default: false })
+  isEdited: boolean;
 
   @OneToMany(() => SavedPostEntity, (saved) => saved.post)
   savedBy: SavedPostEntity[];
@@ -66,9 +69,6 @@ export class PostEntity {
   @OneToMany(() => CommentEntity, (comment) => comment.post)
   comments: CommentEntity[];
 
-  @OneToMany(() => LikesEntity, (likes) => likes.post)
-  likes: LikesEntity[];
-
   @OneToMany(() => PostRepostEntity, (repost) => repost.post)
   reposts: PostRepostEntity[];
 
@@ -76,7 +76,7 @@ export class PostEntity {
   @Column()
   profileId: number;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @DeleteDateColumn()
   deletedAt?: Date;
 
   @CreateDateColumn()

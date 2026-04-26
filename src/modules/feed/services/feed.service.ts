@@ -2,7 +2,10 @@ import { PostEntity } from '@app/modules/post/entities/post.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { PostIdRow } from '../types/feed.interface';
+import { PostIdRow, PostResponseDto } from '../types/feed.interface';
+import { SearchResult } from '@app/modules/search/types/search.interface';
+import { buildPostResponse } from '../builders/build-feed-responce';
+import { normalizeRaw } from '../mappers/raw-mapper';
 
 @Injectable()
 export class FeedService {
@@ -38,6 +41,7 @@ export class FeedService {
         'post.allowComments',
         'post.visibility',
         'post.createdAt',
+        'post.isEdited',
         'post.likesCount',
         'post.commentsCount',
         'post.repostsCount',
@@ -59,10 +63,11 @@ export class FeedService {
 
     qb.addSelect(
       `EXISTS (
-      SELECT 1 FROM post_likes l
-      WHERE l."postId" = post.id
-        AND l."profileId" = :profileId
-    )`,
+    SELECT 1 FROM likes l
+    WHERE l."targetId" = post.id
+      AND l."profileId" = :profileId
+      AND l."targetType" = 'post'
+  )`,
       'isLiked',
     );
 
@@ -209,5 +214,229 @@ export class FeedService {
     );
 
     return this.getFeedBase(idsQb, profileId, limit, cursor);
+  }
+
+  //=============================================== Search Posts ==========================================================
+
+  private buildSearchIdsQuery(
+    profileId: number,
+    query: string,
+    options?: { includePrivate?: boolean },
+  ) {
+    const { includePrivate = false } = options ?? {};
+
+    const normalizedQuery = query.trim();
+
+    const params = {
+      query: normalizedQuery,
+      prefix: `${normalizedQuery}%`,
+      fallback: `%${normalizedQuery}%`,
+    };
+
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoin('post.profile', 'profile')
+      .select(['post.id AS post_id', 'post.createdAt'])
+
+      .addSelect(
+        `
+      CASE
+        WHEN profile.name ILIKE :prefix THEN 2
+        WHEN post.content ILIKE :prefix THEN 1
+        ELSE 0
+      END
+      `,
+        'prefix_match',
+      )
+
+      .addSelect(
+        `
+      GREATEST(
+        similarity(post.content, :query),
+        similarity(profile.name, :query) * 1.3,
+        similarity(profile.username, :query) * 1.1
+      )
+      `,
+        'similarity_score',
+      )
+
+      .addSelect(
+        `
+      (
+        GREATEST(
+          similarity(post.content, :query),
+          similarity(profile.name, :query) * 1.3,
+          similarity(profile.username, :query) * 1.1
+        ) * 0.6 +
+        LOG(1 + post."likesCount") * 0.3 +
+        CASE 
+          WHEN post."createdAt" > NOW() - INTERVAL '3 days' THEN 0.1
+          ELSE 0
+        END
+      )
+      `,
+        'rank_score',
+      )
+
+      .where('post.deletedAt IS NULL')
+
+      .andWhere(
+        `
+      (
+        post.content ILIKE :prefix
+        OR post.content ILIKE :fallback
+        OR post.content % :query
+
+        OR profile.name ILIKE :prefix
+        OR profile.name ILIKE :fallback
+        OR profile.name % :query
+
+        OR profile.username ILIKE :prefix
+      )
+      `,
+      )
+
+      .andWhere(
+        `
+      GREATEST(
+        similarity(post.content, :query),
+        similarity(profile.name, :query)
+      ) > 0.2
+      `,
+      )
+
+      .setParameters(params);
+
+    this.applyVisibilityFilter(qb, profileId, includePrivate);
+
+    return qb;
+  }
+
+  private async getSearchBase(
+    idsQb: SelectQueryBuilder<PostEntity>,
+    profileId: number,
+    limit: number,
+    offset: number,
+  ) {
+    idsQb
+      .orderBy('prefix_match', 'DESC')
+      .addOrderBy('rank_score', 'DESC')
+      .addOrderBy('post.createdAt', 'DESC')
+      .limit(limit)
+      .offset(offset);
+
+    const idsResult = await idsQb.getRawMany<{ post_id: number }>();
+
+    if (!idsResult.length) {
+      return {
+        entities: [],
+        raw: [],
+      };
+    }
+
+    const ids = idsResult.map((r) => r.post_id);
+
+    const dataQb = this.buildDataQuery(profileId).where(
+      'post.id IN (:...ids)',
+      { ids },
+    );
+
+    const result = await dataQb.getRawAndEntities();
+
+    const orderMap = new Map<number, number>(
+      ids.map((id, index) => [id, index]),
+    );
+
+    result.entities.sort(
+      (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0),
+    );
+
+    return {
+      entities: result.entities,
+      raw: idsResult,
+    };
+  }
+
+  async searchPosts(
+    profileId: number,
+    query: string,
+    options?: {
+      limit?: number;
+      page?: number;
+    },
+  ): Promise<SearchResult<PostResponseDto>> {
+    const { limit = 10, page = 1 } = options || {};
+    const offset = (page - 1) * limit;
+
+    const normalizedQuery = query.trim();
+
+    if (!normalizedQuery) {
+      return {
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit,
+        },
+      };
+    }
+
+    const idsQb = this.buildSearchIdsQuery(profileId, normalizedQuery, {
+      includePrivate: true,
+    });
+
+    const data = await this.getSearchBase(idsQb, profileId, limit, offset);
+
+    const rawMap = normalizeRaw(data.raw);
+
+    const posts = buildPostResponse(data.entities, rawMap);
+
+    const countParams = {
+      query: normalizedQuery,
+      prefix: `${normalizedQuery}%`,
+      fallback: `%${normalizedQuery}%`,
+    };
+
+    const totalQb = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoin('post.profile', 'profile')
+      .where('post.deletedAt IS NULL')
+      .andWhere(
+        `
+      (
+        post.content ILIKE :prefix
+        OR post.content ILIKE :fallback
+        OR post.content % :query
+
+        OR profile.name ILIKE :prefix
+        OR profile.name ILIKE :fallback
+        OR profile.name % :query
+
+        OR profile.username ILIKE :prefix
+      )
+    `,
+      )
+      .andWhere(
+        `
+      GREATEST(
+        similarity(post.content, :query),
+        similarity(profile.name, :query)
+      ) > 0.2
+    `,
+      )
+      .setParameters(countParams);
+
+    this.applyVisibilityFilter(totalQb, profileId, true);
+
+    const total = await totalQb.getCount();
+
+    return {
+      data: posts,
+      meta: {
+        total,
+        page,
+        limit,
+      },
+    };
   }
 }

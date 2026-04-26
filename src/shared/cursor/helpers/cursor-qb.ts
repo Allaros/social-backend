@@ -1,10 +1,10 @@
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
-import { CursorShape, CursorConfig } from '../types/cursor.interface';
+import { CursorConfig } from '../types/cursor.interface';
 
 export class CursorQueryHelper {
   static applyCursor<
     TEntity extends ObjectLiteral,
-    TCursor extends CursorShape,
+    TCursor extends Record<string, any>,
   >(
     qb: SelectQueryBuilder<TEntity>,
     alias: string,

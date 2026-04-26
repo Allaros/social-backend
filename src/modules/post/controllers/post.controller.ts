@@ -3,12 +3,17 @@ import {
   Controller,
   Delete,
   Param,
+  ParseIntPipe,
   Post,
   Put,
+  Req,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { JwtAuthGuard } from '../../auth/guards/auth.guard';
 import { EmailVerifiedGuard } from '../../auth/guards/email-verified.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -17,9 +22,10 @@ import { CurrentUser } from '@app/shared/decorators/currentUser.decorator';
 import { UserEntity } from '../../user/user.entity';
 import { CreatePostUseCase } from '../use-cases/create-post.usecase';
 import { HardDeletePostUseCase } from '../use-cases/hard-delete-post.usecase';
-import { PostService } from '../services/post.service';
 import { RecoverPostUseCase } from '../use-cases/recover-post.usecase';
 import { SoftDeletePostUseCase } from '../use-cases/soft-delete-post.usecase';
+import { EditPostUseCase } from '../use-cases/edit-post.usecase';
+import { AddViewUseCase } from '../use-cases/add-view.usecase';
 
 @Controller('posts')
 export class PostController {
@@ -28,11 +34,13 @@ export class PostController {
     private readonly hardDeletePostUseCase: HardDeletePostUseCase,
     private readonly softDeletePostUseCase: SoftDeletePostUseCase,
     private readonly recoverPostUseCase: RecoverPostUseCase,
-    private readonly postService: PostService,
+    private readonly editPostUseCase: EditPostUseCase,
+    private readonly addViewUseCase: AddViewUseCase,
   ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  @UsePipes(new ValidationPipe({ transform: true }))
   @UseInterceptors(FilesInterceptor('media'))
   create(
     @CurrentUser() user: UserEntity,
@@ -41,6 +49,24 @@ export class PostController {
   ) {
     console.log(dto);
     return this.createPostUseCase.execute(user.profile.id, dto, media);
+  }
+
+  @Put('edit/:id')
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  @UsePipes(new ValidationPipe({ transform: true }))
+  @UseInterceptors(FilesInterceptor('media'))
+  async editPost(
+    @Body() dto: EditPostDto,
+    @Param('id', ParseIntPipe) postId: number,
+    @CurrentUser() user: UserEntity,
+    @UploadedFiles() media?: Express.Multer.File[],
+  ) {
+    return await this.editPostUseCase.execute(
+      postId,
+      user.profile.id,
+      dto,
+      media,
+    );
   }
 
   @Delete(':id/hard')
@@ -79,8 +105,15 @@ export class PostController {
     return post;
   }
 
-  @Put('edit/:id')
+  @Post(':id/view')
   @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
-  @UseInterceptors(FilesInterceptor('media'))
-  async editPost(@Body dto: EditPostDto)
+  async addView(
+    @Param('id') id: number,
+    @CurrentUser() user: UserEntity,
+    @Req() req: Request,
+  ) {
+    await this.addViewUseCase.execute(Number(id), user.profile.id, req.ip);
+
+    return { success: true };
+  }
 }

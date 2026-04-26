@@ -1,3 +1,4 @@
+import { PostEntity } from '@app/modules/post/entities/post.entity';
 import { ProfileEntity } from '@app/modules/profile/profile.entity';
 import {
   Column,
@@ -10,7 +11,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { PostEntity } from './post.entity';
 
 @Entity('comments')
 export class CommentEntity {
@@ -42,11 +42,22 @@ export class CommentEntity {
 
   @Index()
   @Column({ nullable: true })
-  parentId?: number;
+  parentId?: number | null;
 
-  @ManyToOne(() => CommentEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => CommentEntity)
   @JoinColumn({ name: 'parentId' })
   parent?: CommentEntity;
+
+  @Index()
+  @Column({ type: 'int', nullable: true })
+  replyOnId?: number | null;
+
+  @ManyToOne(() => CommentEntity, { nullable: true })
+  @JoinColumn({ name: 'replyOnId' })
+  replyOn?: CommentEntity;
+
+  @Column({ type: 'varchar', nullable: true })
+  replyOnUsername?: string | null;
 
   @OneToMany(() => CommentEntity, (comment) => comment.parent)
   replies: CommentEntity[];
@@ -56,6 +67,12 @@ export class CommentEntity {
 
   @Column({ default: 0 })
   repliesCount: number;
+
+  @Column({ default: false })
+  isEdited: boolean;
+
+  @Column({ type: 'timestamp', nullable: true, default: null })
+  deletedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

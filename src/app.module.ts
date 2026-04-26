@@ -13,8 +13,9 @@ import { SearchModule } from './modules/search/search.module';
 import { PostModule } from './modules/post/post.module';
 import { FeedModule } from './modules/feed/feed.module';
 import { PostCounterModule } from './modules/post-counters/post-counter.module';
-import { PostLikeModule } from './modules/post-like/post-like.module';
+import { LikeModule } from './modules/like/like.module';
 import { PostSavingModule } from './modules/post-saving/post-saving.module';
+import { PostCommentsModule } from './modules/post-comments/post-comments.module';
 
 @Module({
   imports: [
@@ -38,9 +39,10 @@ import { PostSavingModule } from './modules/post-saving/post-saving.module';
     SearchModule,
     PostModule,
     PostCounterModule,
-    PostLikeModule,
+    LikeModule,
     PostSavingModule,
     FeedModule,
+    PostCommentsModule,
   ],
   controllers: [AppController],
   providers: [

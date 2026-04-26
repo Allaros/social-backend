@@ -7,7 +7,5 @@ export function decodeCursor(cursor?: string): Cursor | null {
     Buffer.from(cursor, 'base64').toString(),
   ) as Cursor;
 
-  console.log('DECODED CURSOR:', cursor);
-
   return decoded;
 }

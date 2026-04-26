@@ -10,6 +10,10 @@ import { HardDeletePostUseCase } from './use-cases/hard-delete-post.usecase';
 import { SoftDeletePostUseCase } from './use-cases/soft-delete-post.usecase';
 import { RecoverPostUseCase } from './use-cases/recover-post.usecase';
 import { ProfileModule } from '../profile/profile.module';
+import { EditPostUseCase } from './use-cases/edit-post.usecase';
+import { RedisModule } from '../redis/redis.module';
+import { AddViewUseCase } from './use-cases/add-view.usecase';
+import { LikeModule } from '../like/like.module';
 
 @Module({
   imports: [
@@ -17,6 +21,8 @@ import { ProfileModule } from '../profile/profile.module';
     FileModule,
     PostMediaModule,
     ProfileModule,
+    RedisModule,
+    LikeModule,
   ],
   controllers: [PostController],
   providers: [
@@ -25,6 +31,8 @@ import { ProfileModule } from '../profile/profile.module';
     HardDeletePostUseCase,
     SoftDeletePostUseCase,
     RecoverPostUseCase,
+    EditPostUseCase,
+    AddViewUseCase,
   ],
   exports: [PostService],
 })

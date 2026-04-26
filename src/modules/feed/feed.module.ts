@@ -16,5 +16,6 @@ import { PostEntity } from '../post/entities/post.entity';
     GetSavedPostsUseCase,
     GetProfilePostsUseCase,
   ],
+  exports: [FeedService],
 })
 export class FeedModule {}

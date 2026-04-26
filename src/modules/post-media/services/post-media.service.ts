@@ -1,5 +1,5 @@
 import { UploadedMedia } from '@app/modules/file/types/file.interface';
-import { PostMediaEntity } from '@app/modules/post/entities/media.entity';
+import { PostMediaEntity } from '@app/modules/post-media/entities/media.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
@@ -23,5 +23,9 @@ export class PostMediaService {
     const entities = media.map((m) => repo.create({ ...m, postId }));
 
     return repo.save(entities);
+  }
+
+  async deleteMany(idsToDelete: number[], manager: EntityManager) {
+    await manager.delete(PostMediaEntity, idsToDelete);
   }
 }
