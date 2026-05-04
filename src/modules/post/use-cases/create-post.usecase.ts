@@ -5,24 +5,24 @@ import {
   HttpException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { PostService } from '../services/post.service';
 import { CreatePostBody } from '../types/post.interface';
-import { ProfileService } from '@app/modules/profile/profile.service';
 import { PostMediaService } from '@app/modules/post-media/services/post-media.service';
 import { UploadMediaUseCase } from '@app/modules/file/use-cases/upload-media.usecase';
 import { DeleteMediaUseCase } from '@app/modules/file/use-cases/delete-media.usecase';
 import { processContent } from '../helpers/process-content';
+import EventEmitter2 from 'eventemitter2';
+import { PostEvents } from '@app/shared/events/domain-events';
+import { PostCreatedEvent } from '../events/post-create.event';
 
 @Injectable()
 export class CreatePostUseCase {
   constructor(
     private readonly postService: PostService,
     private readonly mediaService: PostMediaService,
-    private readonly profileService: ProfileService,
     private readonly uploadMediaUseCase: UploadMediaUseCase,
     private readonly deleteMediaUseCase: DeleteMediaUseCase,
-    private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -47,31 +47,23 @@ export class CreatePostUseCase {
         );
       }
 
-      const post = await this.dataSource.transaction(async (manager) => {
-        const createdPost = await this.postService.create(
-          {
-            profileId,
-            content: safeContent,
-            visibility: dto.visibility ?? 'public',
-            allowComments: dto.allowComments ?? true,
-          },
-          manager,
-        );
-
-        if (uploadedMedia.length) {
-          await this.mediaService.attachToPost(
-            uploadedMedia,
-            createdPost.id,
-            manager,
-          );
-        }
-
-        await this.profileService.incrementPostsCount(profileId, manager);
-
-        return createdPost;
+      const createdPost = await this.postService.create({
+        profileId,
+        content: safeContent,
+        visibility: dto.visibility ?? 'public',
+        allowComments: dto.allowComments ?? true,
       });
 
-      return post;
+      if (uploadedMedia.length) {
+        await this.mediaService.attachToPost(uploadedMedia, createdPost.id);
+      }
+
+      this.eventEmitter.emit(
+        PostEvents.POST_CREATED,
+        new PostCreatedEvent(createdPost.id, profileId),
+      );
+
+      return createdPost;
     } catch (error) {
       if (uploadedMedia.length) {
         await this.deleteMediaUseCase.execute(uploadedMedia, 'post-media');

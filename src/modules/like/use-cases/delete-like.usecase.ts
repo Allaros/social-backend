@@ -4,18 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { LikeService } from '../services/like.service';
-import { DataSource } from 'typeorm';
-import { PostCounterService } from '@app/modules/post-counters/post-counter.service';
 import { LikeTargetType } from '../types/like.interface';
-import { CommentsCountersService } from '@app/modules/comments-counters/comments-counters.service';
+import EventEmitter2 from 'eventemitter2';
+import { CommentEvents, PostEvents } from '@app/shared/events/domain-events';
+import { PostUnlikeEvent } from '../events/post-unlike.event';
+import { CommentUnlikeEvent } from '../events/comment-unlike.event';
 
 @Injectable()
 export class DeleteLikeUseCase {
   constructor(
     private readonly likeService: LikeService,
-    private readonly dataSource: DataSource,
-    private readonly postCounterService: PostCounterService,
-    private readonly commentsCounterService: CommentsCountersService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -31,38 +30,29 @@ export class DeleteLikeUseCase {
 
     if (!existingLike) throw new NotFoundException('Не удалось найти лайк');
 
-    await this.dataSource.transaction(async (manager) => {
-      await this.likeService.delete(
-        targetId,
-        targetType,
-        currentProfileId,
-        manager,
-      );
+    await this.likeService.delete(targetId, targetType, currentProfileId);
 
-      switch (targetType) {
-        case LikeTargetType.POST: {
-          await this.postCounterService.updateCounters(
-            targetId,
-            { likesCount: -1 },
-            manager,
-          );
+    switch (targetType) {
+      case LikeTargetType.POST: {
+        this.eventEmitter.emit(
+          PostEvents.POST_UNLIKED,
+          new PostUnlikeEvent(targetId),
+        );
 
-          break;
-        }
-        case LikeTargetType.COMMENT: {
-          await this.commentsCounterService.updateCounters(
-            targetId,
-            { likesCount: -1 },
-            manager,
-          );
-
-          break;
-        }
-        default: {
-          throw new BadRequestException('Укажите правильный тип цели');
-        }
+        break;
       }
-    });
+      case LikeTargetType.COMMENT: {
+        this.eventEmitter.emit(
+          CommentEvents.COMMENT_UNLIKED,
+          new CommentUnlikeEvent(targetId),
+        );
+
+        break;
+      }
+      default: {
+        throw new BadRequestException('Укажите правильный тип цели');
+      }
+    }
 
     return { success: true };
   }

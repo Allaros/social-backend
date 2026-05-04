@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { FeedService } from '../services/feed.service';
 import { normalizeRaw } from '../mappers/raw-mapper';
 import { buildPostResponse } from '../builders/build-feed-responce';
-import { encodeCursor } from '../helpers/encode-cursor';
-import { decodeCursor } from '../helpers/decode-cursor';
+import { feedCursorCodec } from '../helpers/cursor-codec';
 
 @Injectable()
 export class GetFeedUseCase {
@@ -12,7 +11,7 @@ export class GetFeedUseCase {
   async execute(profileId: number, limit?: number, cursorString?: string) {
     const normalizedLimit = Math.min(limit ?? 10, 50);
 
-    const cursor = decodeCursor(cursorString);
+    const cursor = feedCursorCodec.decode(cursorString);
 
     const { entities, raw, nextCursor } = await this.feedService.getFeed(
       normalizedLimit,
@@ -26,8 +25,8 @@ export class GetFeedUseCase {
     return {
       posts,
       nextCursor: nextCursor
-        ? encodeCursor({
-            createdAt: nextCursor.createdAt.toISOString(),
+        ? feedCursorCodec.encode({
+            createdAt: nextCursor.createdAt.getTime(),
             id: nextCursor.id,
           })
         : null,

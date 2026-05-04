@@ -13,7 +13,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ProfileService } from './profile.service';
+import { ProfileService } from './services/profile.service';
 import { JwtAuthGuard } from '../auth/guards/auth.guard';
 import { EmailVerifiedGuard } from '../auth/guards/email-verified.guard';
 import { CurrentUser } from '@app/shared/decorators/currentUser.decorator';

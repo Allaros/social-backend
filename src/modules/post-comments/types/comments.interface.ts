@@ -4,6 +4,13 @@ export type CommentCursor = {
   id: number;
 };
 
+export enum CommentTargetType {
+  POST = 'post',
+  COMMENT = 'comment',
+}
+
+export type CommentCounterField = 'likesCount' | 'repliesCount';
+
 export type CommentCursorInternal = {
   likesCount: number;
   createdAt: Date;

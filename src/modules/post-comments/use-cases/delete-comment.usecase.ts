@@ -5,20 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PostCommentsService } from '../services/post-comments.service';
-import { DataSource } from 'typeorm';
-import { PostCounterService } from '@app/modules/post-counters/post-counter.service';
-import { LikeService } from '@app/modules/like/services/like.service';
-import { LikeTargetType } from '@app/modules/like/types/like.interface';
-import { CommentsCountersService } from '@app/modules/comments-counters/comments-counters.service';
+import EventEmitter2 from 'eventemitter2';
+import { CommentEvents } from '@app/shared/events/domain-events';
+import { CommentHardDeleteEvent } from '../events/comment-hard-delete.event';
+import { CommentTargetType } from '../types/comments.interface';
 
 @Injectable()
 export class DeleteCommentUseCase {
   constructor(
     private readonly commentService: PostCommentsService,
-    private readonly likeService: LikeService,
-    private readonly dataSource: DataSource,
-    private readonly postCounterService: PostCounterService,
-    private readonly commentCounterService: CommentsCountersService,
+    private readonly eventEmmiter: EventEmitter2,
   ) {}
 
   async execute(profileId: number, commentId: number) {
@@ -34,66 +30,49 @@ export class DeleteCommentUseCase {
 
     const postId = existingComment.postId;
 
-    await this.dataSource.transaction(async (manager) => {
-      const isRoot = !existingComment.parentId;
-      const hasReplies = existingComment.repliesCount > 0;
+    const isRoot = !existingComment.parentId;
+    const hasReplies = existingComment.repliesCount > 0;
 
-      if (isRoot) {
-        if (hasReplies) {
-          await this.commentService.delete(commentId, manager);
-        } else {
-          await this.likeService.deleteByTarget({
-            manager,
-            targetId: commentId,
-            targetType: LikeTargetType.COMMENT,
-          });
+    if (isRoot) {
+      if (hasReplies) {
+        await this.commentService.delete(commentId);
+      } else {
+        await this.commentService.hardDelete(commentId);
 
-          await this.commentService.hardDelete(commentId, manager);
-
-          await this.postCounterService.updateCounters(
-            postId,
-            { commentsCount: -1 },
-            manager,
-          );
-        }
-
-        return;
+        this.eventEmmiter.emit(
+          CommentEvents.COMMENT_HARD_DELETE,
+          new CommentHardDeleteEvent(commentId, postId, CommentTargetType.POST),
+        );
       }
 
-      const parentId = existingComment.parentId!;
+      return { success: true };
+    }
 
-      await this.likeService.deleteByTarget({
-        manager,
-        targetId: commentId,
-        targetType: LikeTargetType.COMMENT,
-      });
+    const parentId = existingComment.parentId!;
 
-      await this.commentService.hardDelete(commentId, manager);
+    await this.commentService.hardDelete(commentId);
 
-      await this.commentCounterService.updateCounters(
+    this.eventEmmiter.emit(
+      CommentEvents.COMMENT_HARD_DELETE,
+      new CommentHardDeleteEvent(
+        commentId,
         parentId,
-        { repliesCount: -1 },
-        manager,
-      );
+        CommentTargetType.COMMENT,
+      ),
+    );
 
-      const parent = await this.commentService.findById(
-        parentId,
-        postId,
-        manager,
-      );
+    const parent = await this.commentService.findById(parentId, postId);
 
-      if (parent && parent.deletedAt && parent.repliesCount === 0) {
-        await this.commentService.hardDelete(parent.id, manager);
+    if (parent && parent.deletedAt && parent.repliesCount === 0) {
+      await this.commentService.hardDelete(parent.id);
 
-        if (!parent.parentId) {
-          await this.postCounterService.updateCounters(
-            postId,
-            { commentsCount: -1 },
-            manager,
-          );
-        }
+      if (!parent.parentId) {
+        this.eventEmmiter.emit(
+          CommentEvents.COMMENT_HARD_DELETE,
+          new CommentHardDeleteEvent(commentId, postId, CommentTargetType.POST),
+        );
       }
-    });
+    }
 
     return { success: true };
   }

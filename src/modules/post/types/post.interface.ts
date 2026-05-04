@@ -9,3 +9,10 @@ export enum PostVisibility {
   FOLLOWERS = 'followers',
   PRIVATE = 'private',
 }
+
+export type PostCounterField =
+  | 'likesCount'
+  | 'commentsCount'
+  | 'savingsCount'
+  | 'repostsCount'
+  | 'viewsCount';

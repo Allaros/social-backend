@@ -1,26 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { PostSavingService } from '../services/post-saving.service';
-import { DataSource } from 'typeorm';
-import { PostCounterService } from '@app/modules/post-counters/post-counter.service';
+import EventEmitter2 from 'eventemitter2';
+import { PostEvents } from '@app/shared/events/domain-events';
+import { PostUnsaveEvent } from '../events/post-unsave.event';
 
 @Injectable()
 export class UnsavePostUseCase {
   constructor(
     private readonly postSavingService: PostSavingService,
-    private readonly postCounterService: PostCounterService,
-    private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(postId: number, profileId: number) {
-    await this.dataSource.transaction(async (manager) => {
-      await this.postSavingService.delete(postId, profileId, manager);
+    await this.postSavingService.delete(postId, profileId);
 
-      await this.postCounterService.updateCounters(
-        postId,
-        { savingsCount: -1 },
-        manager,
-      );
-    });
+    this.eventEmitter.emit(
+      PostEvents.POST_UNSAVED,
+      new PostUnsaveEvent(postId, profileId),
+    );
 
     return { success: true };
   }

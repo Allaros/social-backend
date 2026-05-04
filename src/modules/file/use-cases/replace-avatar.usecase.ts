@@ -5,7 +5,7 @@ import {
 } from '../application/file.utils';
 import { StorageService } from '../services/storage.service';
 import { ImageService } from '../services/image.service';
-import { ProfileService } from '@app/modules/profile/profile.service';
+import { ProfileService } from '@app/modules/profile/services/profile.service';
 
 @Injectable()
 export class ReplaceAvatarUseCase {

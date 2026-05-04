@@ -2,7 +2,11 @@ import { PostEntity } from '@app/modules/post/entities/post.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { PostIdRow, PostResponseDto } from '../types/feed.interface';
+import {
+  FeedCursor,
+  PostIdRow,
+  PostResponseDto,
+} from '../types/feed.interface';
 import { SearchResult } from '@app/modules/search/types/search.interface';
 import { buildPostResponse } from '../builders/build-feed-responce';
 import { normalizeRaw } from '../mappers/raw-mapper';
@@ -89,7 +93,7 @@ export class FeedService {
     idsQb: SelectQueryBuilder<PostEntity>,
     profileId: number,
     limit: number,
-    cursor?: { createdAt: string; id: number } | null,
+    cursor?: FeedCursor | null,
   ) {
     if (cursor) {
       idsQb.andWhere(
@@ -168,7 +172,7 @@ export class FeedService {
 
   async getFeed(
     limit: number = 10,
-    cursor: { createdAt: string; id: number } | null,
+    cursor: FeedCursor | null,
     profileId: number,
   ) {
     const idsQb = this.buildIdsQuery(profileId, {
@@ -182,7 +186,7 @@ export class FeedService {
     currentProfileId: number,
     targetProfileId: number,
     limit: number = 5,
-    cursor?: { createdAt: string; id: number } | null,
+    cursor?: FeedCursor | null,
   ) {
     const isOwner = currentProfileId === targetProfileId;
 
@@ -200,7 +204,7 @@ export class FeedService {
   async getSavedPosts(
     profileId: number,
     limit: number = 5,
-    cursor?: { createdAt: string; id: number } | null,
+    cursor?: FeedCursor | null,
   ) {
     const idsQb = this.buildIdsQuery(profileId, {
       includePrivate: true,

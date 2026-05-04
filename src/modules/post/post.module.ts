@@ -13,7 +13,7 @@ import { ProfileModule } from '../profile/profile.module';
 import { EditPostUseCase } from './use-cases/edit-post.usecase';
 import { RedisModule } from '../redis/redis.module';
 import { AddViewUseCase } from './use-cases/add-view.usecase';
-import { LikeModule } from '../like/like.module';
+import { PostCountUpdatingListener } from './listeners/post-counter-updating.listener';
 
 @Module({
   imports: [
@@ -22,7 +22,6 @@ import { LikeModule } from '../like/like.module';
     PostMediaModule,
     ProfileModule,
     RedisModule,
-    LikeModule,
   ],
   controllers: [PostController],
   providers: [
@@ -33,6 +32,7 @@ import { LikeModule } from '../like/like.module';
     RecoverPostUseCase,
     EditPostUseCase,
     AddViewUseCase,
+    PostCountUpdatingListener,
   ],
   exports: [PostService],
 })

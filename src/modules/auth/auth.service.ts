@@ -13,7 +13,7 @@ import { ProviderEntity } from './provider.entity';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import { UserService } from '../user/user.service';
 import { UserEntity } from '../user/user.entity';
-import { ProfileService } from '../profile/profile.service';
+import { ProfileService } from '../profile/services/profile.service';
 import { SessionEntity } from './session.entity';
 import { sign } from 'jsonwebtoken';
 import { createHash, createHmac, randomBytes, randomUUID } from 'crypto';

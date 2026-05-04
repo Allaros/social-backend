@@ -14,3 +14,8 @@ export interface ProfileResponce {
   avatarUrl?: string;
   bio?: string;
 }
+
+export type ProfileCounterField =
+  | 'postsCount'
+  | 'followersCount'
+  | 'followingCount';

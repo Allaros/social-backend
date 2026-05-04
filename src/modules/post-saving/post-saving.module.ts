@@ -6,14 +6,9 @@ import { SavedPostEntity } from './entities/saved_posts.entity';
 import { SavePostUseCase } from './use-cases/save-post.usecase';
 import { UnsavePostUseCase } from './use-cases/unsave-post.usecase';
 import { PostModule } from '../post/post.module';
-import { PostCounterModule } from '../post-counters/post-counter.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([SavedPostEntity]),
-    PostModule,
-    PostCounterModule,
-  ],
+  imports: [TypeOrmModule.forFeature([SavedPostEntity]), PostModule],
   controllers: [PostSavingController],
   providers: [PostSavingService, SavePostUseCase, UnsavePostUseCase],
 })

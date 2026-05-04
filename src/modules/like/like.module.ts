@@ -5,17 +5,16 @@ import { LikeController } from './controllers/like.controller';
 import { LikeService } from './services/like.service';
 import { CreateLikeUseCase } from './use-cases/create-like.usecase';
 import { DeleteLikeUseCase } from './use-cases/delete-like.usecase';
-import { PostCounterModule } from '../post-counters/post-counter.module';
-import { CommentsCountersModule } from '../comments-counters/comments-counters.module';
+import { PostLikeCleanupListener } from './listeners/like-cleanup.listener';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([LikeEntity]),
-    PostCounterModule,
-    CommentsCountersModule,
-  ],
+  imports: [TypeOrmModule.forFeature([LikeEntity])],
   controllers: [LikeController],
-  providers: [LikeService, CreateLikeUseCase, DeleteLikeUseCase],
-  exports: [LikeService],
+  providers: [
+    LikeService,
+    CreateLikeUseCase,
+    DeleteLikeUseCase,
+    PostLikeCleanupListener,
+  ],
 })
 export class LikeModule {}

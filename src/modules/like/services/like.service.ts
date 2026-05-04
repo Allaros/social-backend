@@ -54,16 +54,12 @@ export class LikeService {
 
   async deleteByTarget({
     targetId,
-    manager,
     targetType,
   }: {
     targetId: number;
     targetType: LikeTargetType;
-    manager: EntityManager;
   }) {
-    const repo = this.getRepo(manager);
-
-    return repo
+    return this.likeRepository
       .createQueryBuilder()
       .delete()
       .where('targetId = :targetId', { targetId })

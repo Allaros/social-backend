@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommentEntity } from '../entities/comment.entity';
 import { EntityManager, IsNull, Repository } from 'typeorm';
+import { CommentCounterField } from '../types/comments.interface';
+import { CounterUpdater } from '@app/shared/database/counter-updater';
 
 @Injectable()
 export class PostCommentsService {
@@ -62,48 +64,23 @@ export class PostCommentsService {
     );
   }
 
-  async delete(commentId: number, manager: EntityManager) {
+  async delete(commentId: number, manager?: EntityManager) {
     await this.getRepo(manager).update(
       { id: commentId, deletedAt: IsNull() },
       { deletedAt: new Date() },
     );
   }
 
-  async hardDelete(commentId: number, manager: EntityManager) {
+  async hardDelete(commentId: number, manager?: EntityManager) {
     await this.getRepo(manager).delete({ id: commentId });
   }
 
   // ===================================================== Comment Counters ========================================================
 
-  async incrementReplies(
+  async updateCounters(
     commentId: number,
-    postId: number,
-    manager?: EntityManager,
+    updates: Partial<Record<CommentCounterField, number>>,
   ) {
-    await this.getRepo(manager).increment(
-      { id: commentId, postId },
-      'repliesCount',
-      1,
-    );
-  }
-
-  async decrementReplies(
-    commentId: number,
-    postId?: number,
-    manager?: EntityManager,
-  ) {
-    await this.getRepo(manager).decrement(
-      { id: commentId, postId },
-      'repliesCount',
-      1,
-    );
-  }
-
-  async incrementLikes(commentId: number, manager?: EntityManager) {
-    await this.getRepo(manager).increment({ id: commentId }, 'likesCount', 1);
-  }
-
-  async decrementLikes(commentId: number, manager?: EntityManager) {
-    await this.getRepo(manager).decrement({ id: commentId }, 'likesCount', 1);
+    await CounterUpdater.update(this.commentRepository, commentId, updates);
   }
 }

@@ -9,7 +9,7 @@ import { UserResponse } from './types/User.interface';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { compare, hash } from 'bcrypt';
-import { ProfileService } from '@app/modules/profile/profile.service';
+import { ProfileService } from '@app/modules/profile/services/profile.service';
 import { isPostgresUniqueViolation } from '@app/modules/profile/handlers/errorHandlers';
 import { SessionEntity } from '../auth/session.entity';
 import { createHash } from 'crypto';

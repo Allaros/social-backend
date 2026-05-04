@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentEntity } from './entities/comment.entity';
-import { PostCounterModule } from '../post-counters/post-counter.module';
 import { PostCommentsController } from './controllers/post-comments.controller';
 import { PostCommentsService } from './services/post-comments.service';
 import { CreateCommentUseCase } from './use-cases/create-comment.usecase';
@@ -12,17 +11,10 @@ import { GetPostCommentsController } from './controllers/get-post-comments.contr
 import { GetCommentUseCase } from './use-cases/get-comments.usecase';
 import { GetRepliesByParentUseCase } from './use-cases/get-replies-by-parent.usecase';
 import { PostCommentQueryService } from './services/post-comment-query.service';
-import { LikeModule } from '../like/like.module';
-import { CommentsCountersModule } from '../comments-counters/comments-counters.module';
+import { CommentCountersUdateListener } from './listeners/comment-counters-update.listener';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([CommentEntity]),
-    PostCounterModule,
-    PostModule,
-    LikeModule,
-    CommentsCountersModule,
-  ],
+  imports: [TypeOrmModule.forFeature([CommentEntity]), PostModule],
   controllers: [PostCommentsController, GetPostCommentsController],
   providers: [
     PostCommentsService,
@@ -32,6 +24,7 @@ import { CommentsCountersModule } from '../comments-counters/comments-counters.m
     EditCommentUseCase,
     GetCommentUseCase,
     GetRepliesByParentUseCase,
+    CommentCountersUdateListener,
   ],
   exports: [PostCommentsService],
 })

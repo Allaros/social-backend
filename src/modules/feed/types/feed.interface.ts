@@ -31,8 +31,8 @@ export type RawFlags = {
   isOwned: boolean;
 };
 
-export type Cursor = {
-  createdAt: string;
+export type FeedCursor = {
+  createdAt: number;
   id: number;
 };
 

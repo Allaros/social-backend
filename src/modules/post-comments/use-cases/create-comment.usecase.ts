@@ -4,20 +4,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { PostCommentsService } from '../services/post-comments.service';
-import { PostCounterService } from '@app/modules/post-counters/post-counter.service';
 import { PostService } from '@app/modules/post/services/post.service';
-import { CommentsCountersService } from '@app/modules/comments-counters/comments-counters.service';
+import EventEmitter2 from 'eventemitter2';
+import { CommentEvents } from '@app/shared/events/domain-events';
+import { CommentCreateEvent } from '../events/comment-create.event';
+import { CommentTargetType } from '../types/comments.interface';
 
 @Injectable()
 export class CreateCommentUseCase {
   constructor(
-    private readonly dataSource: DataSource,
     private readonly commentService: PostCommentsService,
-    private readonly postCounterService: PostCounterService,
     private readonly postService: PostService,
-    private readonly commentCounterService: CommentsCountersService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(commentPayload: {
@@ -46,66 +45,60 @@ export class CreateCommentUseCase {
       );
     }
 
-    return await this.dataSource.transaction(async (manager) => {
-      let resolvedParentId: number | null = null;
-      let replyOnId: number | null = null;
-      let replyOnUsername: string | null = null;
+    let resolvedParentId: number | null = null;
+    let replyOnId: number | null = null;
+    let replyOnUsername: string | null = null;
 
-      if (replyPayload) {
-        const replyTarget = await this.commentService.findById(
-          replyPayload.replyOnId,
-          postId,
-          manager,
-        );
-
-        if (!replyTarget) {
-          throw new NotFoundException('Комментарий для ответа не найден');
-        }
-
-        if (replyTarget.deletedAt) {
-          throw new BadRequestException(
-            'Нельзя ответить на удалённый комментарий',
-          );
-        }
-
-        const expectedParentId = replyTarget.parentId ?? replyTarget.id;
-
-        if (replyPayload.parentId !== expectedParentId) {
-          throw new BadRequestException('parentId не соответствует replyOnId');
-        }
-
-        resolvedParentId = expectedParentId;
-        replyOnId = replyTarget.id;
-        replyOnUsername = replyTarget.profile.username ?? null;
-      }
-
-      const newComment = await this.commentService.create(
-        normalizedBody,
-        profileId,
+    if (replyPayload) {
+      const replyTarget = await this.commentService.findById(
+        replyPayload.replyOnId,
         postId,
-        resolvedParentId,
-        replyOnId,
-        replyOnUsername,
-        manager,
       );
 
-      const isRoot = resolvedParentId === null;
+      if (!replyTarget) {
+        throw new NotFoundException('Комментарий для ответа не найден');
+      }
 
-      if (isRoot) {
-        await this.postCounterService.updateCounters(
-          postId,
-          { commentsCount: 1 },
-          manager,
-        );
-      } else if (resolvedParentId) {
-        await this.commentCounterService.updateCounters(
-          resolvedParentId,
-          { repliesCount: 1 },
-          manager,
+      if (replyTarget.deletedAt) {
+        throw new BadRequestException(
+          'Нельзя ответить на удалённый комментарий',
         );
       }
 
-      return newComment;
-    });
+      const expectedParentId = replyTarget.parentId ?? replyTarget.id;
+
+      if (replyPayload.parentId !== expectedParentId) {
+        throw new BadRequestException('parentId не соответствует replyOnId');
+      }
+
+      resolvedParentId = expectedParentId;
+      replyOnId = replyTarget.id;
+      replyOnUsername = replyTarget.profile.username ?? null;
+    }
+
+    const newComment = await this.commentService.create(
+      normalizedBody,
+      profileId,
+      postId,
+      resolvedParentId,
+      replyOnId,
+      replyOnUsername,
+    );
+
+    const isRoot = resolvedParentId === null;
+
+    if (isRoot) {
+      this.eventEmitter.emit(
+        CommentEvents.COMMENT_CREATED,
+        new CommentCreateEvent(postId, CommentTargetType.POST),
+      );
+    } else if (resolvedParentId) {
+      this.eventEmitter.emit(
+        CommentEvents.COMMENT_CREATED,
+        new CommentCreateEvent(resolvedParentId, CommentTargetType.COMMENT),
+      );
+    }
+
+    return newComment;
   }
 }
