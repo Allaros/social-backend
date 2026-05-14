@@ -18,6 +18,7 @@ export class NotificationCreateListener {
       type: event.type,
       entityId: event.entityId,
       entityType: event.entityType,
+      metadata: event.metadata,
     });
   }
 }

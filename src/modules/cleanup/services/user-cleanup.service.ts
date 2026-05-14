@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { DataSource } from 'typeorm';
 import { UserEntity } from '@app/modules/user/user.entity';
+import { cleanupConfig } from '../cleanup.config';
 
 @Injectable()
-export class CleanupService {
+export class UserCleanupService {
   constructor(private readonly dataSource: DataSource) {}
 
-  @Cron('0 */6 * * *')
+  @Cron(cleanupConfig.cron.users)
   async removeUnverifiedUsers() {
     await this.dataSource
       .createQueryBuilder()

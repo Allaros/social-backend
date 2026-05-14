@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { ProfileService } from '../profile/services/profile.service';
 import { DropdownItem, DropdownSearchResponse } from './types/search.interface';
 import { FeedService } from '../feed/services/feed.service';
 import { getPostPrimary } from './helpers/post-primary-fallback';
 import { PostResponseDto } from '../feed/types/feed.interface';
+import { FindProfilesUseCase } from '../profile/use-cases/find-profiles.usecase';
 
 @Injectable()
 export class SearchService {
   constructor(
-    private readonly profileService: ProfileService,
+    private readonly findProfilesUseCase: FindProfilesUseCase,
     private readonly feedService: FeedService,
   ) {}
   async dropdownSearch(
@@ -24,7 +24,11 @@ export class SearchService {
     const limit = 4;
 
     const [profiles, posts] = await Promise.all([
-      this.profileService.findProfiles(normalizedQuery, limit),
+      this.findProfilesUseCase.execute({
+        query: normalizedQuery,
+        viewerId: profileId,
+        limit,
+      }),
       this.feedService.searchPosts(profileId, normalizedQuery, { limit }),
     ]);
 
@@ -33,7 +37,7 @@ export class SearchService {
         id: profile.id,
         primary: profile.name,
         secondary: `@${profile.username}`,
-        type: 'profile',
+        type: 'profile' as const,
         avatarUrl: profile.avatarUrl,
       }),
     );
@@ -68,7 +72,12 @@ export class SearchService {
     }
 
     if (type === 'profiles') {
-      return this.profileService.findProfiles(normalizedQuery, limit, page);
+      return this.findProfilesUseCase.execute({
+        query: normalizedQuery,
+        viewerId: profileId,
+        limit,
+        page,
+      });
     }
 
     if (type === 'posts') {

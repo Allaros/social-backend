@@ -3,7 +3,6 @@ import { PostCommentsService } from '../services/post-comments.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { CommentEvents } from '@app/shared/events/domain-events';
 import { CommentCreateEvent } from '../events/comment-create.event';
-import { CommentTargetType } from '../types/comments.interface';
 import { CommentHardDeleteEvent } from '../events/comment-hard-delete.event';
 import { CommentLikeEvent } from '@app/modules/like/events/comment-like.event';
 import { CommentUnlikeEvent } from '@app/modules/like/events/comment-unlike.event';
@@ -14,8 +13,8 @@ export class CommentCountersUdateListener {
 
   @OnEvent(CommentEvents.COMMENT_CREATED)
   async incrementReplyCount(event: CommentCreateEvent) {
-    if (event.targetType === CommentTargetType.COMMENT) {
-      await this.commentsService.updateCounters(event.targetId, {
+    if (event.parentId) {
+      await this.commentsService.updateCounters(event.parentId, {
         repliesCount: 1,
       });
     }
@@ -23,7 +22,7 @@ export class CommentCountersUdateListener {
 
   @OnEvent(CommentEvents.COMMENT_HARD_DELETE)
   async decrementRepliesCount(event: CommentHardDeleteEvent) {
-    if (event.targetType === CommentTargetType.COMMENT) {
+    if (event.parentId) {
       await this.commentsService.updateCounters(event.parentId, {
         repliesCount: -1,
       });

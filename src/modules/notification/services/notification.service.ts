@@ -233,4 +233,24 @@ export class NotificationService {
       },
     });
   }
+
+  async markAsSeen(ids: number[], manager?: EntityManager) {
+    const repo = this.getRepo(manager);
+
+    await repo
+      .createQueryBuilder()
+      .update(NotificationEntity)
+      .set({ isSeen: true })
+      .where('id IN (:...ids)', { ids })
+      .andWhere('isSeen = false')
+      .execute();
+  }
+
+  async countUnseenByProfileId(profileId: number): Promise<number> {
+    return this.notificationRepository
+      .createQueryBuilder('notification')
+      .where('notification.receiverId = :profileId', { profileId })
+      .andWhere('notification.isSeen = false')
+      .getCount();
+  }
 }

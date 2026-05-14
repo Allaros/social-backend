@@ -21,4 +21,11 @@ export const FollowingEvents = {
 
 export const NotificationEvents = {
   NOTIFICATION_CREATE: 'notification.create',
+  NOTIFICATION_DELETE: 'notification.delete',
+  NOTIFICATION_STATE_CHANGED: 'notification.state.changed',
+};
+
+export const PresenceEvents = {
+  USER_OFFLINE: 'presence.disconnect',
+  USER_ONLINE: 'presence.connect',
 };

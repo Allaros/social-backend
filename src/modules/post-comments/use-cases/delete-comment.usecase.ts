@@ -8,12 +8,13 @@ import { PostCommentsService } from '../services/post-comments.service';
 import EventEmitter2 from 'eventemitter2';
 import { CommentEvents } from '@app/shared/events/domain-events';
 import { CommentHardDeleteEvent } from '../events/comment-hard-delete.event';
-import { CommentTargetType } from '../types/comments.interface';
+import { PostService } from '@app/modules/post/services/post.service';
 
 @Injectable()
 export class DeleteCommentUseCase {
   constructor(
     private readonly commentService: PostCommentsService,
+    private readonly postService: PostService,
     private readonly eventEmmiter: EventEmitter2,
   ) {}
 
@@ -30,6 +31,15 @@ export class DeleteCommentUseCase {
 
     const postId = existingComment.postId;
 
+    const post = await this.postService.findById(postId);
+
+    if (!post)
+      throw new NotFoundException('Пост не найден. Возможно, он был удален');
+
+    const postAuthorId = post.profileId;
+
+    let replyToUserId: number | null = null;
+
     const isRoot = !existingComment.parentId;
     const hasReplies = existingComment.repliesCount > 0;
 
@@ -41,7 +51,14 @@ export class DeleteCommentUseCase {
 
         this.eventEmmiter.emit(
           CommentEvents.COMMENT_HARD_DELETE,
-          new CommentHardDeleteEvent(commentId, postId, CommentTargetType.POST),
+          new CommentHardDeleteEvent({
+            authorId: profileId,
+            commentId: commentId,
+            parentId: null,
+            postAuthorId,
+            postId,
+            replyToUserId: null,
+          }),
         );
       }
 
@@ -50,26 +67,52 @@ export class DeleteCommentUseCase {
 
     const parentId = existingComment.parentId!;
 
-    await this.commentService.hardDelete(commentId);
+    if (existingComment.replyOnId) {
+      const replyTarget = await this.commentService.findById(
+        existingComment.replyOnId,
+        postId,
+      );
 
-    this.eventEmmiter.emit(
-      CommentEvents.COMMENT_HARD_DELETE,
-      new CommentHardDeleteEvent(
-        commentId,
-        parentId,
-        CommentTargetType.COMMENT,
-      ),
-    );
+      if (replyTarget) {
+        replyToUserId = replyTarget.profileId;
+      }
+    }
+
+    await this.commentService.hardDelete(commentId);
 
     const parent = await this.commentService.findById(parentId, postId);
 
-    if (parent && parent.deletedAt && parent.repliesCount === 0) {
+    if (!parent)
+      throw new NotFoundException(
+        'Комментарий не найден. Возможно, он был удален',
+      );
+
+    this.eventEmmiter.emit(
+      CommentEvents.COMMENT_HARD_DELETE,
+      new CommentHardDeleteEvent({
+        authorId: profileId,
+        commentId: commentId,
+        parentId: parentId,
+        postAuthorId,
+        postId,
+        replyToUserId,
+      }),
+    );
+
+    if (parent.deletedAt && parent.repliesCount === 0) {
       await this.commentService.hardDelete(parent.id);
 
       if (!parent.parentId) {
         this.eventEmmiter.emit(
           CommentEvents.COMMENT_HARD_DELETE,
-          new CommentHardDeleteEvent(commentId, postId, CommentTargetType.POST),
+          new CommentHardDeleteEvent({
+            authorId: profileId,
+            commentId: parent.id,
+            parentId: null,
+            postAuthorId,
+            postId,
+            replyToUserId: null,
+          }),
         );
       }
     }

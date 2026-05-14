@@ -11,8 +11,8 @@ export enum NotificationType {
 }
 
 export enum NotificationEntityType {
-  POST = 'post',
-  COMMENT = 'comment',
+  POST = 'posts',
+  COMMENT = 'post_comments',
 }
 
 export type AggregatedActor = {
@@ -70,4 +70,12 @@ export type BuildNotificationFeedPayload = {
   notifications: NotificationEntity[];
   aggregatedActors: ProfileEntity[];
   nextCursor: string | null;
+};
+
+export type NotificationStateChangedEventProps = {
+  type: 'created' | 'updated' | 'deleted';
+  receiverId: number;
+  unseenCount: number;
+  hasUnseen: boolean;
+  notificationIds: number[];
 };

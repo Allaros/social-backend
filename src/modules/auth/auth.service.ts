@@ -28,6 +28,7 @@ import { ConfigService } from '@nestjs/config';
 import { UAParser } from 'ua-parser-js';
 import { VerificationType } from '../verification/types/verification.interface';
 import { VerificationEntity } from '../verification/verification.entity';
+import { CreateProfileUseCase } from '../profile/use-cases/create-profile.usecase';
 
 @Injectable()
 export class AuthService {
@@ -41,6 +42,7 @@ export class AuthService {
     private readonly profileService: ProfileService,
     private readonly verificationService: VerificationService,
     private readonly configService: ConfigService,
+    private readonly createProfileUseCase: CreateProfileUseCase,
   ) {}
 
   generateAccessToken(user: UserEntity): string {
@@ -169,7 +171,7 @@ export class AuthService {
           manager,
         );
 
-        await this.profileService.createProfile(user, profile ?? {}, manager);
+        await this.createProfileUseCase.execute(user, profile ?? {}, manager);
       } else {
         user = existingUser;
 

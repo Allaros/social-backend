@@ -5,12 +5,18 @@ import {
   NotificationEntityType,
   NotificationType,
 } from '../types/notification.interface';
+import EventEmitter2 from 'eventemitter2';
+import { ProfileService } from '@app/modules/profile/services/profile.service';
+import { NotificationEvents } from '@app/shared/events/domain-events';
+import { NotificationStateChangedEvent } from '../events/notification-state-changed.event';
 
 @Injectable()
 export class DeleteNotificationByEventUseCase {
   constructor(
     private readonly notificationService: NotificationService,
     private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly profileService: ProfileService,
   ) {}
 
   async execute({
@@ -39,6 +45,12 @@ export class DeleteNotificationByEventUseCase {
 
       if (!notification) return;
 
+      const receiver = await this.profileService.findById(receiverId);
+
+      if (!receiver) return;
+
+      const notificationId = notification.id;
+
       const metadata = notification.metadata ?? {};
 
       const aggregatedActors = metadata.aggregatedActors ?? [];
@@ -55,6 +67,28 @@ export class DeleteNotificationByEventUseCase {
 
       if (nextCount <= 0 || nextActors.length === 0) {
         await this.notificationService.delete(notification.id, manager);
+        let unseenCount = 0;
+
+        if (!notification.isSeen) {
+          const counters = await this.profileService.updateCountersAndReturn(
+            receiverId,
+            { unseenNotificationsCount: -1 },
+            ['unseenNotificationsCount'],
+          );
+
+          unseenCount = counters.unseenNotificationsCount;
+        }
+
+        this.eventEmitter.emit(
+          NotificationEvents.NOTIFICATION_STATE_CHANGED,
+          new NotificationStateChangedEvent({
+            receiverId,
+            type: 'deleted',
+            hasUnseen: unseenCount > 0,
+            unseenCount,
+            notificationIds: [notificationId],
+          }),
+        );
 
         return;
       }
@@ -66,6 +100,17 @@ export class DeleteNotificationByEventUseCase {
         metadata,
         manager,
       });
+
+      this.eventEmitter.emit(
+        NotificationEvents.NOTIFICATION_STATE_CHANGED,
+        new NotificationStateChangedEvent({
+          receiverId,
+          type: 'updated',
+          hasUnseen: receiver.unseenNotificationsCount > 0,
+          unseenCount: receiver.unseenNotificationsCount,
+          notificationIds: [notificationId],
+        }),
+      );
     });
 
     return { success: true };

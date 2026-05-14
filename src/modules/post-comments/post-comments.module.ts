@@ -12,6 +12,7 @@ import { GetCommentUseCase } from './use-cases/get-comments.usecase';
 import { GetRepliesByParentUseCase } from './use-cases/get-replies-by-parent.usecase';
 import { PostCommentQueryService } from './services/post-comment-query.service';
 import { CommentCountersUdateListener } from './listeners/comment-counters-update.listener';
+import { CommentNotificationsListener } from './listeners/comment-notifications.listener';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CommentEntity]), PostModule],
@@ -25,6 +26,7 @@ import { CommentCountersUdateListener } from './listeners/comment-counters-updat
     GetCommentUseCase,
     GetRepliesByParentUseCase,
     CommentCountersUdateListener,
+    CommentNotificationsListener,
   ],
   exports: [PostCommentsService],
 })

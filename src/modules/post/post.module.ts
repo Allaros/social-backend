@@ -14,6 +14,7 @@ import { EditPostUseCase } from './use-cases/edit-post.usecase';
 import { RedisModule } from '../redis/redis.module';
 import { AddViewUseCase } from './use-cases/add-view.usecase';
 import { PostCountUpdatingListener } from './listeners/post-counter-updating.listener';
+import { PostNotificationsListener } from './listeners/post-notifications.listener';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { PostCountUpdatingListener } from './listeners/post-counter-updating.lis
     EditPostUseCase,
     AddViewUseCase,
     PostCountUpdatingListener,
+    PostNotificationsListener,
   ],
   exports: [PostService],
 })

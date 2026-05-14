@@ -1,8 +1,28 @@
-import { CommentTargetType } from '../types/comments.interface';
+type CreateCommentProps = {
+  commentId: number;
+  postId: number;
+
+  authorId: number;
+
+  parentId: number | null;
+  replyToUserId: number | null;
+
+  postAuthorId: number;
+  textPreview?: string;
+};
 
 export class CommentCreateEvent {
-  constructor(
-    public readonly targetId: number,
-    public readonly targetType: CommentTargetType,
-  ) {}
+  public readonly commentId: number;
+  public readonly postId: number;
+
+  public readonly authorId: number;
+
+  public readonly parentId: number | null;
+  public readonly replyToUserId: number | null;
+  public readonly textPreview?: string;
+
+  public readonly postAuthorId: number;
+  constructor(props: CreateCommentProps) {
+    Object.assign(this, props);
+  }
 }

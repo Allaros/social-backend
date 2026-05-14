@@ -4,7 +4,6 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
-import { CleanupService } from './cleanup.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -18,6 +17,7 @@ import { PostCommentsModule } from './modules/post-comments/post-comments.module
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { FollowsModule } from './modules/follows/follows.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { CleanupModule } from './modules/cleanup/cleanup.module';
 
 @Module({
   imports: [
@@ -47,12 +47,9 @@ import { NotificationModule } from './modules/notification/notification.module';
     PostCommentsModule,
     FollowsModule,
     NotificationModule,
+    CleanupModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    CleanupService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-  ],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

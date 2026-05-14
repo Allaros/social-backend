@@ -9,7 +9,6 @@ import { PostService } from '@app/modules/post/services/post.service';
 import EventEmitter2 from 'eventemitter2';
 import { CommentEvents } from '@app/shared/events/domain-events';
 import { CommentCreateEvent } from '../events/comment-create.event';
-import { CommentTargetType } from '../types/comments.interface';
 
 @Injectable()
 export class CreateCommentUseCase {
@@ -48,6 +47,9 @@ export class CreateCommentUseCase {
     let resolvedParentId: number | null = null;
     let replyOnId: number | null = null;
     let replyOnUsername: string | null = null;
+    let replyUserId: number | null = null;
+    let textPreview: string | undefined =
+      this.stripHtml(existingPost.content) ?? 'Пост без текста';
 
     if (replyPayload) {
       const replyTarget = await this.commentService.findById(
@@ -74,6 +76,8 @@ export class CreateCommentUseCase {
       resolvedParentId = expectedParentId;
       replyOnId = replyTarget.id;
       replyOnUsername = replyTarget.profile.username ?? null;
+      replyUserId = replyTarget.profileId;
+      textPreview = replyTarget.content.trim().slice(0, 20);
     }
 
     const newComment = await this.commentService.create(
@@ -85,20 +89,28 @@ export class CreateCommentUseCase {
       replyOnUsername,
     );
 
-    const isRoot = resolvedParentId === null;
-
-    if (isRoot) {
-      this.eventEmitter.emit(
-        CommentEvents.COMMENT_CREATED,
-        new CommentCreateEvent(postId, CommentTargetType.POST),
-      );
-    } else if (resolvedParentId) {
-      this.eventEmitter.emit(
-        CommentEvents.COMMENT_CREATED,
-        new CommentCreateEvent(resolvedParentId, CommentTargetType.COMMENT),
-      );
-    }
+    this.eventEmitter.emit(
+      CommentEvents.COMMENT_CREATED,
+      new CommentCreateEvent({
+        authorId: profileId,
+        commentId: newComment.id,
+        parentId: resolvedParentId,
+        postAuthorId: existingPost.profileId,
+        postId,
+        replyToUserId: replyUserId,
+        textPreview: textPreview,
+      }),
+    );
 
     return newComment;
+  }
+
+  private stripHtml(html?: string | null): string {
+    if (!html) return '';
+
+    return html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }

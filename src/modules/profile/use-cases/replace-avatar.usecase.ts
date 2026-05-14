@@ -1,19 +1,16 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   extractPathFromUrl,
   generateFileName,
-} from '../application/file.utils';
-import { StorageService } from '../services/storage.service';
-import { ImageService } from '../services/image.service';
-import { ProfileService } from '@app/modules/profile/services/profile.service';
+} from '../../file/application/file.utils';
+import { StorageService } from '../../file/services/storage.service';
+import { ImageService } from '../../file/services/image.service';
 
 @Injectable()
 export class ReplaceAvatarUseCase {
   constructor(
     private readonly storageService: StorageService,
     private readonly imageService: ImageService,
-    @Inject(forwardRef(() => ProfileService))
-    private readonly profileService: ProfileService,
   ) {}
 
   async execute(profileId: number, buffer: Buffer, oldAvatarUrl?: string) {
@@ -31,11 +28,6 @@ export class ReplaceAvatarUseCase {
     const publicUrl = this.storageService.getPublicUrl('avatars', fileName);
 
     try {
-      const avatar = await this.profileService.replaceAvatarUrl(
-        profileId,
-        publicUrl,
-      );
-
       if (oldAvatarUrl) {
         const oldPath = extractPathFromUrl(oldAvatarUrl);
         if (oldPath) {
@@ -43,7 +35,7 @@ export class ReplaceAvatarUseCase {
         }
       }
 
-      return avatar;
+      return publicUrl;
     } catch (e) {
       await this.storageService.remove('avatars', [fileName]);
       throw e;

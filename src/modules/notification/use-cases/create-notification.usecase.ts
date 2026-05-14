@@ -6,6 +6,10 @@ import {
 } from '../types/notification.interface';
 import { notificationPolicy } from '../constants/notification-policy';
 import { DataSource } from 'typeorm';
+import EventEmitter2 from 'eventemitter2';
+import { NotificationEvents } from '@app/shared/events/domain-events';
+import { NotificationStateChangedEvent } from '../events/notification-state-changed.event';
+import { ProfileService } from '@app/modules/profile/services/profile.service';
 
 type CreateNotificationPayload = {
   actorId: number;
@@ -13,6 +17,10 @@ type CreateNotificationPayload = {
   type: NotificationType;
   entityId?: number;
   entityType?: NotificationEntityType;
+  metadata?: {
+    textPreview?: string;
+    imagePreview?: string;
+  };
 };
 
 @Injectable()
@@ -20,15 +28,22 @@ export class CreateNotificationUseCase {
   constructor(
     private readonly notificationService: NotificationService,
     private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly profileService: ProfileService,
   ) {}
 
   async execute(payload: CreateNotificationPayload) {
-    const { actorId, receiverId, type, entityId, entityType } = payload;
+    const { actorId, receiverId, type, entityId, entityType, metadata } =
+      payload;
 
     const policy = notificationPolicy[type];
 
+    const receiver = await this.profileService.findById(receiverId);
+
+    if (!receiver) return { status: 'skipped' };
+
     if (!policy.allowSelf && actorId === receiverId)
-      return { ststus: 'skipped' };
+      return { status: 'skipped' };
 
     if (policy.dedup) {
       const duplicate = await this.notificationService.findRecentDuplicate({
@@ -60,11 +75,22 @@ export class CreateNotificationUseCase {
           });
         });
 
+        this.eventEmitter.emit(
+          NotificationEvents.NOTIFICATION_STATE_CHANGED,
+          new NotificationStateChangedEvent({
+            hasUnseen: true,
+            receiverId,
+            type: 'updated',
+            unseenCount: receiver.unseenNotificationsCount,
+            notificationIds: [existing.id],
+          }),
+        );
+
         return { status: 'aggregated' };
       }
     }
 
-    await this.notificationService.create({
+    const result = await this.notificationService.create({
       actorId,
       receiverId,
       type,
@@ -78,9 +104,33 @@ export class CreateNotificationUseCase {
                 { actorId, createdAt: new Date().toISOString() },
               ],
               type: policy.aggregate,
+              textPreview: metadata?.textPreview,
+              imagePreview: metadata?.imagePreview,
             }
-          : undefined,
+          : {
+              textPreview: metadata?.textPreview,
+              imagePreview: metadata?.imagePreview,
+            },
     });
+
+    const newNotificationId = result.identifiers[0].id as number;
+
+    const unseenCount = await this.profileService.updateCountersAndReturn(
+      receiverId,
+      { unseenNotificationsCount: 1 },
+      ['unseenNotificationsCount'],
+    );
+
+    this.eventEmitter.emit(
+      NotificationEvents.NOTIFICATION_STATE_CHANGED,
+      new NotificationStateChangedEvent({
+        hasUnseen: true,
+        receiverId,
+        type: 'created',
+        unseenCount: unseenCount.unseenNotificationsCount,
+        notificationIds: [newNotificationId],
+      }),
+    );
 
     return { status: 'created' };
   }

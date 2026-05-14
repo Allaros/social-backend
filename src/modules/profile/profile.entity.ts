@@ -69,6 +69,18 @@ export class ProfileEntity {
   @OneToMany(() => FollowsEntity, (follow) => follow.following)
   followerRelations: FollowsEntity[];
 
+  @Column({ default: 0 })
+  unreadNotificationsCount: number;
+
+  @Column({ default: 0 })
+  unseenNotificationsCount: number;
+
+  @Column({ default: 0 })
+  unreadMessagesCount: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastSeenAt?: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 
