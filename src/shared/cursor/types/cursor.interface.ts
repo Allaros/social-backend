@@ -14,3 +14,13 @@ export interface PaginationResult<TEntity, TRaw = unknown> {
   raw: TRaw[];
   nextCursor: string | null;
 }
+
+export interface CompositeCursorField<TCursor extends CursorShape> {
+  key: Extract<keyof TCursor, string>;
+  column: string;
+}
+
+export interface CompositeCursorConfig<TCursor extends CursorShape> {
+  fields: CompositeCursorField<TCursor>[];
+  order: 'ASC' | 'DESC';
+}

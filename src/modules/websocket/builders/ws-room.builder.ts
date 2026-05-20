@@ -12,4 +12,8 @@ export class WsRoomBuilder {
   static messages(profileId: number) {
     return `${WsRoom.MESSAGES}:${profileId}`;
   }
+
+  static presence(profileId: number) {
+    return `${WsRoom.PRESENCE}:${profileId}`;
+  }
 }

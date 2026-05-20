@@ -29,6 +29,7 @@ export class ProfileQueryService {
           'profile.username',
           'profile.avatarUrl',
           'profile.bio',
+          'profile.lastSeenAt',
         ]
       : ['profile.id', 'profile.name', 'profile.username', 'profile.avatarUrl'];
 
@@ -119,6 +120,7 @@ export class ProfileQueryService {
       'profile.postsCount',
       'profile.followersCount',
       'profile.followingCount',
+      'profile.lastSeenAt',
     ]);
 
     qb.where('profile.username = :username', { username });
@@ -128,5 +130,171 @@ export class ProfileQueryService {
     qb.addSelect('profile.id', 'profile_id');
 
     return qb.getRawAndEntities();
+  }
+
+  buildFriendsQuery(profileId: number) {
+    const qb = this.buildBaseProfileQuery();
+
+    qb.select([
+      'profile.id',
+      'profile.name',
+      'profile.username',
+      'profile.avatarUrl',
+      'profile.bio',
+      'profile.lastSeenAt',
+    ]);
+
+    qb.innerJoin(
+      'follows',
+      'f1',
+      `
+      f1."followingId" = profile.id
+      AND f1."followerId" = :profileId
+    `,
+      { profileId },
+    )
+
+      .innerJoin(
+        'follows',
+        'f2',
+        `
+        f2."followerId" = profile.id
+        AND f2."followingId" = :profileId
+      `,
+        { profileId },
+      )
+
+      .where('profile.id != :profileId', { profileId })
+
+      .addSelect('profile.id', 'profile_id')
+
+      .addSelect('f1.createdAt', 'friend_created_at')
+
+      .orderBy('f1.createdAt', 'DESC')
+      .addOrderBy('profile.id', 'DESC');
+
+    return qb;
+  }
+
+  buildFollowersQuery(profileId: number) {
+    const qb = this.buildBaseProfileQuery();
+
+    qb.select([
+      'profile.id',
+      'profile.name',
+      'profile.username',
+      'profile.avatarUrl',
+      'profile.bio',
+      'profile.lastSeenAt',
+    ]);
+
+    qb.innerJoin(
+      'follows',
+      'f',
+      `
+      f."followerId" = profile.id
+      AND f."followingId" = :profileId
+    `,
+      { profileId },
+    )
+
+      .where('profile.id != :profileId', { profileId })
+
+      .addSelect('profile.id', 'profile_id')
+
+      .addSelect('f.createdAt', 'follow_created_at')
+
+      .orderBy('f.createdAt', 'DESC')
+      .addOrderBy('profile.id', 'DESC');
+
+    return qb;
+  }
+
+  buildFollowingQuery(profileId: number) {
+    const qb = this.buildBaseProfileQuery();
+
+    qb.select([
+      'profile.id',
+      'profile.name',
+      'profile.username',
+      'profile.avatarUrl',
+      'profile.bio',
+      'profile.lastSeenAt',
+    ]);
+
+    qb.innerJoin(
+      'follows',
+      'f',
+      `
+      f."followingId" = profile.id
+      AND f."followerId" = :profileId
+    `,
+      { profileId },
+    )
+
+      .where('profile.id != :profileId', { profileId })
+
+      .addSelect('profile.id', 'profile_id')
+
+      .addSelect('f.createdAt', 'follow_created_at')
+
+      .orderBy('f.createdAt', 'DESC')
+      .addOrderBy('profile.id', 'DESC');
+
+    return qb;
+  }
+
+  applyLocalSearch(qb: SelectQueryBuilder<ProfileEntity>, query?: string) {
+    const rawQuery = query?.trim();
+
+    if (!rawQuery) {
+      return qb;
+    }
+
+    const prefixQuery = `${rawQuery}%`;
+
+    qb.addSelect(
+      `
+      GREATEST(
+        similarity(profile.username, :rawQuery) * 1.5,
+        similarity(profile.name, :rawQuery)
+      )
+    `,
+      'similarity_score',
+    )
+
+      .addSelect(
+        `
+        CASE
+          WHEN profile.username ILIKE :prefixQuery THEN 1
+          ELSE 0
+        END
+      `,
+        'prefix_match',
+      )
+
+      .andWhere(
+        `
+        (
+          profile.username ILIKE :prefixQuery
+          OR profile.name ILIKE :prefixQuery
+          OR profile.username % :rawQuery
+          OR profile.name % :rawQuery
+        )
+      `,
+      )
+
+      .setParameters({
+        rawQuery,
+        prefixQuery,
+      });
+
+    qb.expressionMap.orderBys = {};
+
+    qb.orderBy('prefix_match', 'DESC')
+      .addOrderBy('similarity_score', 'DESC')
+      .addOrderBy('profile.id', 'DESC');
+
+    return qb;
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Bucket, Database } from '../types/file.interface';
+import { Bucket, BucketName, Database } from '../types/file.interface';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -35,5 +35,57 @@ export class StorageService {
 
   getPublicUrl(bucket: Bucket, path: string) {
     return this.supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  }
+
+  getPublicUrlFromKey(bucket: BucketName, storageKey: string) {
+    return this.supabase.storage.from(bucket).getPublicUrl(storageKey).data
+      .publicUrl;
+  }
+
+  async createPresignedUploadUrl(bucket: Bucket, path: string) {
+    const { data, error } = await this.supabase.storage
+      .from(bucket)
+      .createSignedUploadUrl(path);
+
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return {
+      signedUrl: data.signedUrl,
+      storageKey: data.path,
+    };
+  }
+
+  async createPresignedReadUrl(
+    bucket: Bucket,
+    storageKey: string,
+    expiresIn = 3600,
+  ) {
+    const { data, error } = await this.supabase.storage
+      .from(bucket)
+      .createSignedUrl(storageKey, expiresIn);
+
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return data.signedUrl;
+  }
+
+  async createPresignedReadUrls(
+    bucket: Bucket,
+    storageKeys: string[],
+    expiresIn = 3600,
+  ): Promise<Map<string, string>> {
+    if (!storageKeys.length) return new Map();
+
+    const { data, error } = await this.supabase.storage
+      .from(bucket)
+      .createSignedUrls(storageKeys, expiresIn);
+
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return new Map(
+      data
+        .filter((item) => item.signedUrl && item.path)
+        .map((item) => [item.path as string, item.signedUrl]),
+    );
   }
 }

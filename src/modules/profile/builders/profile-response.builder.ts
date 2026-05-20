@@ -17,6 +17,7 @@ export class ProfileResponseBuilder {
         username: profile.username,
         avatarUrl: profile.avatarUrl,
         bio: profile.bio,
+        lastSeenAt: profile.lastSeenAt,
 
         isOwner: calculated?.isOwner ?? false,
 
@@ -39,6 +40,7 @@ export class ProfileResponseBuilder {
       followingCount: profile.followingCount,
       followersCount: profile.followersCount,
       postsCount: profile.postsCount,
+      lastSeenAt: profile.lastSeenAt,
 
       isOwner: statusFields?.isOwner ?? false,
       isFollowed: statusFields?.isFollowed ?? false,

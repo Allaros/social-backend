@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Put,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -19,12 +20,15 @@ import { DiskMulterFile } from '../file/types/file.interface';
 import { UserEntity } from '../user/user.entity';
 import { GetProfileByUsernameUseCase } from './use-cases/get-profile-by-username.usecase';
 import { UpdateProfileUseCase } from './use-cases/update-profile.usecase';
+import { ProfileRelationType } from './types/profile.interface';
+import { GetRelationsUseCase } from './use-cases/get-relations.usecase';
 
 @Controller('profile')
 export class ProfileController {
   constructor(
     private readonly updateProfileUseCase: UpdateProfileUseCase,
     private readonly getProfileByUsernameUseCase: GetProfileByUsernameUseCase,
+    private readonly getRelationsUseCase: GetRelationsUseCase,
   ) {}
 
   @Get(':username')
@@ -52,6 +56,25 @@ export class ProfileController {
       body,
       image,
       profileId: user.profile.id,
+    });
+  }
+
+  @Get('relations/:type')
+  @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
+  getRelations(
+    @Param('type') type: ProfileRelationType,
+    @CurrentUser() user: UserEntity,
+    @Query('query') query?: string,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.getRelationsUseCase.execute({
+      profileId: user.profile.id,
+      viewerId: user.profile.id,
+      type,
+      query,
+      cursor,
+      limit,
     });
   }
 }

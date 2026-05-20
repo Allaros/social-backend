@@ -12,14 +12,15 @@ import { GetProfileByUsernameUseCase } from './use-cases/get-profile-by-username
 import { CreateProfileUseCase } from './use-cases/create-profile.usecase';
 import { UpdateProfileUseCase } from './use-cases/update-profile.usecase';
 import { ReplaceAvatarUseCase } from './use-cases/replace-avatar.usecase';
-import { PresenceModule } from '../presence/presence.module';
 import { ProfileStatusListener } from './listeners/profile-status.listener';
+import { WebsocketModule } from '../websocket/websocket.module';
+import { GetRelationsUseCase } from './use-cases/get-relations.usecase';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ProfileEntity]),
     FileModule,
-    PresenceModule,
+    WebsocketModule,
   ],
   controllers: [ProfileController],
   providers: [
@@ -33,6 +34,7 @@ import { ProfileStatusListener } from './listeners/profile-status.listener';
     UpdateProfileUseCase,
     ReplaceAvatarUseCase,
     ProfileStatusListener,
+    GetRelationsUseCase,
   ],
   exports: [ProfileService, FindProfilesUseCase, CreateProfileUseCase],
 })

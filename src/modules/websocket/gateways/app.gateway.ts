@@ -12,9 +12,10 @@ import { AppSocket } from '../types/ws.types';
 import { WsRoomBuilder } from '../builders/ws-room.builder';
 import EventEmitter2 from 'eventemitter2';
 import { WsSystemEvents } from '@app/shared/events/ws-events';
-import { WsConnectedEvent } from '../events/ws-connected.event';
 import { WsDisconnectedEvent } from '../events/ws-disconnected.event';
 import { UnauthorizedException } from '@nestjs/common';
+import { UserOnlineEvent } from '@app/modules/presence/events/user-online.event';
+import { PresenceEvents } from '@app/shared/events/domain-events';
 
 @WebSocketGateway({
   cors: {
@@ -44,15 +45,24 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.data.user = user;
 
-      this.eventEmitter.emit(
-        WsSystemEvents.CONNECTED,
-        new WsConnectedEvent(client, user.profile.id),
-      );
+      const profileId = user.profile.id;
 
       await Promise.all([
-        client.join(WsRoomBuilder.notifications(user.profile.id)),
-        client.join(WsRoomBuilder.profile(user.profile.id)),
+        client.join(WsRoomBuilder.notifications(profileId)),
+        client.join(WsRoomBuilder.profile(profileId)),
+        client.join(WsRoomBuilder.presence(profileId)),
       ]);
+
+      const sockets = await this.server
+        .in(WsRoomBuilder.presence(profileId))
+        .fetchSockets();
+
+      if (sockets.length === 1) {
+        this.eventEmitter.emit(
+          PresenceEvents.USER_ONLINE,
+          new UserOnlineEvent(profileId),
+        );
+      }
 
       console.log('[WS CONNECT]', {
         profileId: user.profile.id,

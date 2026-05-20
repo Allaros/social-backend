@@ -35,4 +35,5 @@ export enum WsRoom {
   NOTIFICATIONS = 'notifications',
   MESSAGES = 'messages',
   PROFILE = 'profile',
+  PRESENCE = 'presence',
 }

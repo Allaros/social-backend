@@ -1,21 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { PresenceService } from '../services/presence.service';
+import { PresenceStateService } from '../../websocket/services/presence-state.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { WsSystemEvents } from '@app/shared/events/ws-events';
-import { WsConnectedEvent } from '@app/modules/websocket/events/ws-connected.event';
 import { WsDisconnectedEvent } from '@app/modules/websocket/events/ws-disconnected.event';
 
 @Injectable()
 export class WsPresenceConnectionListener {
-  constructor(private readonly presenceService: PresenceService) {}
-
-  @OnEvent(WsSystemEvents.CONNECTED)
-  async createConnection(event: WsConnectedEvent) {
-    await this.presenceService.connect(event.profileId, event.client.id);
-  }
+  constructor(
+    private readonly presenceService: PresenceService,
+    private readonly presenceStateService: PresenceStateService,
+  ) {}
 
   @OnEvent(WsSystemEvents.DISCONNECTED)
-  async removeConnection(event: WsDisconnectedEvent) {
-    await this.presenceService.disconnect(event.profileId, event.client.id);
+  removeConnection(event: WsDisconnectedEvent) {
+    setTimeout(() => {
+      void this.handleDisconnect(event);
+    }, 0);
+  }
+
+  private async handleDisconnect(event: WsDisconnectedEvent) {
+    const isOnline = await this.presenceStateService.isOnline(event.profileId);
+
+    if (!isOnline) {
+      this.presenceService.emitOffline(event.profileId);
+    }
   }
 }

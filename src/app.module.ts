@@ -18,6 +18,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { FollowsModule } from './modules/follows/follows.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
+import { MessagesModule } from './modules/messages/messages.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CleanupModule } from './modules/cleanup/cleanup.module';
     FollowsModule,
     NotificationModule,
     CleanupModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

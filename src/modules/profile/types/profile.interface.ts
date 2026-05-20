@@ -48,3 +48,5 @@ export type ProfileCounterField =
   | 'unreadNotificationsCount'
   | 'unseenNotificationsCount'
   | 'unreadMessagesCount';
+
+export type ProfileRelationType = 'friends' | 'followers' | 'following';

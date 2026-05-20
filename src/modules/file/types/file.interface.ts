@@ -15,6 +15,13 @@ export interface UploadedMedia {
   previewUrl?: string;
 }
 
-export type Bucket = 'post-media' | 'avatars';
+export enum BucketName {
+  POST_MEDIA = 'post-media',
+  AVATARS = 'avatars',
+  CHAT_AVATARS = 'chat-avatars',
+  MESSAGE_ATTACHMENTS = 'message-attachments',
+}
+
+export type Bucket = `${BucketName}`;
 
 export type Format = 'webp' | 'mp4';

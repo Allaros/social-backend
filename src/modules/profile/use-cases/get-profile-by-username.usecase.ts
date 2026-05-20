@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ProfileQueryService } from '../services/profile-query.service';
 import { ProfileRawRow } from '../types/profile.interface';
 import { ProfileResponseBuilder } from '../builders/profile-response.builder';
-import { PresenceService } from '@app/modules/presence/services/presence.service';
+import { PresenceStateService } from '@app/modules/websocket/services/presence-state.service';
 
 @Injectable()
 export class GetProfileByUsernameUseCase {
   constructor(
     private readonly profileQueryService: ProfileQueryService,
     private readonly profileResponseBuilder: ProfileResponseBuilder,
-    private readonly presenceService: PresenceService,
+    private readonly presenceStateService: PresenceStateService,
   ) {}
 
   async execute(username: string, viewerId: number) {
@@ -23,7 +23,6 @@ export class GetProfileByUsernameUseCase {
     if (!entity) {
       return null;
     }
-    console.log(entity);
 
     const typedRaw = raw as ProfileRawRow[];
 
@@ -31,7 +30,7 @@ export class GetProfileByUsernameUseCase {
 
     const row = rawMap.get(entity.id);
 
-    const isOnline = await this.presenceService.isOnline(entity.id);
+    const isOnline = await this.presenceStateService.isOnline(entity.id);
 
     return this.profileResponseBuilder.buildSingle(entity, {
       isOwner: row?.is_owner ?? false,
