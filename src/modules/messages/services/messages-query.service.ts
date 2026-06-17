@@ -60,6 +60,25 @@ export class MessagesQueryService {
     return qb;
   }
 
+  applyHiddenMessagesFilter(
+    qb: SelectQueryBuilder<MessageEntity>,
+    memberId: number,
+  ) {
+    qb.andWhere(
+      `
+    NOT EXISTS (
+      SELECT 1
+      FROM hidden_messages hiddenMessage
+      WHERE hiddenMessage."messageId" = message.id
+        AND hiddenMessage."chatMemberId" = :memberId
+    )
+    `,
+      { memberId },
+    );
+
+    return qb;
+  }
+
   applyContentJoin(qb: SelectQueryBuilder<MessageEntity>) {
     qb.leftJoinAndSelect('message.content', 'content');
     return qb;
@@ -78,7 +97,29 @@ export class MessagesQueryService {
 
   applyReplyJoin(qb: SelectQueryBuilder<MessageEntity>) {
     qb.leftJoinAndSelect('message.replyToMessage', 'replyToMessage');
+
     qb.leftJoinAndSelect('replyToMessage.content', 'replyContent');
+
+    qb.leftJoinAndSelect('replyToMessage.senderMember', 'replySenderMember');
+
+    qb.leftJoinAndSelect('replySenderMember.profile', 'replySenderProfile');
+
+    return qb;
+  }
+
+  applyForwardedFromJoin(qb: SelectQueryBuilder<MessageEntity>) {
+    qb.leftJoinAndSelect('message.forwardedFromMessage', 'forwardedMessage');
+
+    qb.leftJoinAndSelect(
+      'forwardedMessage.senderMember',
+      'forwardedSenderMember',
+    );
+
+    qb.leftJoinAndSelect(
+      'forwardedSenderMember.profile',
+      'forwardedSenderProfile',
+    );
+
     return qb;
   }
 

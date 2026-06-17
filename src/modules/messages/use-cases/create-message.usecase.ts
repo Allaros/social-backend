@@ -9,6 +9,7 @@ import { MessagesService } from '../services/messages.service';
 import { MessageAttachmentValidator } from '../validators/attachment.validator';
 import { MessageCreationService } from '../application/message-creation.service';
 import { ResolveChatByIdentifierUseCase } from '@app/modules/chat/use-cases/resolve-chat-by-identifier.usecase';
+import { MessageResponseBuilder } from '../builders/messages-response.builder';
 
 @Injectable()
 export class CreateMessageUseCase {
@@ -18,6 +19,7 @@ export class CreateMessageUseCase {
     private readonly attachmentValidator: MessageAttachmentValidator,
     private readonly messageCreationService: MessageCreationService,
     private readonly resolveChatByIdentifier: ResolveChatByIdentifierUseCase,
+    private readonly messageResponseBuilder: MessageResponseBuilder,
   ) {}
 
   async execute({
@@ -26,6 +28,7 @@ export class CreateMessageUseCase {
     currentProfileId,
     replyToMessageId,
     text,
+    clientId,
   }: {
     currentProfileId: number;
 
@@ -36,6 +39,7 @@ export class CreateMessageUseCase {
     replyToMessageId?: number;
 
     attachments?: MessageAttachmentDto[];
+    clientId?: string;
   }) {
     const chat = await this.resolveChatByIdentifier.execute({
       identifier: chatIdentifier,
@@ -74,9 +78,15 @@ export class CreateMessageUseCase {
       senderMemberId: currentMember.id,
       text: normalizedText,
       replyToMessageId: replyMessage?.id,
+      clientId,
     });
 
-    return message;
+    return this.messageResponseBuilder.buildMessage(
+      message,
+      new Map(),
+      currentProfileId,
+      null,
+    );
   }
 
   private async validateReplyMessage(
@@ -85,7 +95,7 @@ export class CreateMessageUseCase {
   ) {
     if (!replyToMessageId) return null;
 
-    const replyMessage = await this.messagesService.findMessageByChatId(
+    const replyMessage = await this.messagesService.ensureMessageBelongsToChat(
       chatId,
       replyToMessageId,
     );

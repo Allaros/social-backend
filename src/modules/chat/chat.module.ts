@@ -19,6 +19,8 @@ import { ApplyMessageToChatUseCase } from './use-cases/apply-message-to-chat.use
 import { GetMyChatsUseCase } from './use-cases/get-my-chats.usecase';
 import { ResolveChatByIdentifierUseCase } from './use-cases/resolve-chat-by-identifier.usecase';
 import { WebsocketModule } from '../websocket/websocket.module';
+import { GetActiveChatUseCase } from './use-cases/get-active-chat.usecase';
+import { SetLastReadMessageUseCase } from './use-cases/set-last-read-message';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { WebsocketModule } from '../websocket/websocket.module';
     ApplyMessageToChatUseCase,
     GetMyChatsUseCase,
     ResolveChatByIdentifierUseCase,
+    GetActiveChatUseCase,
+    SetLastReadMessageUseCase,
   ],
   exports: [
     ChatService,

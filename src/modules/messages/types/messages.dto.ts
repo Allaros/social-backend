@@ -8,8 +8,11 @@ import {
   IsInt,
   Max,
   Min,
+  IsArray,
+  ArrayNotEmpty,
 } from 'class-validator';
 import { MessageAttachmentDto } from './messages-attachment.dto';
+import { ForwardPayload } from './messages.interface';
 
 export class CreateMessageDto {
   @IsOptional()
@@ -25,6 +28,10 @@ export class CreateMessageDto {
   @IsOptional()
   @IsNumber()
   replyToMessageId?: number;
+
+  @IsOptional()
+  @IsString()
+  clientId?: string;
 }
 
 export class GetMessagesDto {
@@ -42,4 +49,24 @@ export class GetMessagesDto {
   @IsOptional()
   @IsString()
   query?: string;
+}
+
+export class MessagesActionDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @Type(() => Number)
+  @IsInt({ each: true })
+  messageIds: number[];
+}
+
+export class EditMessageDto {
+  @IsString()
+  @MaxLength(4000)
+  text: string;
+}
+
+export class ForwardMessagesDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  forwardPayload: ForwardPayload[];
 }

@@ -16,6 +16,12 @@ import { CreateMessageUseCase } from './use-cases/create-message.usecase';
 import { GetMessagesUseCase } from './use-cases/get-messages.usecase';
 import { GetAttachmentUploadUrlUseCase } from './use-cases/get-attachment-upload-url.usecase';
 import { MessageResponseBuilder } from './builders/messages-response.builder';
+import { DeleteMessagesUseCase } from './use-cases/delete-messages.usecase';
+import { HideMessagesUseCase } from './use-cases/hide-messages.usecase';
+import { HideMessagesService } from './services/hide-messages.service';
+import { HiddenMessageEntity } from './entities/hidden-message.entity';
+import { EditMessageUseCase } from './use-cases/edit-message.usecase';
+import { ForwardMessagesUseCase } from './use-cases/forward-messages.usecase';
 
 @Module({
   imports: [
@@ -23,6 +29,7 @@ import { MessageResponseBuilder } from './builders/messages-response.builder';
       MessageEntity,
       MessageContentEntity,
       MessageAttachmentEntity,
+      HiddenMessageEntity,
     ]),
     ChatModule,
     FileModule,
@@ -39,6 +46,11 @@ import { MessageResponseBuilder } from './builders/messages-response.builder';
     GetMessagesUseCase,
     GetAttachmentUploadUrlUseCase,
     MessageResponseBuilder,
+    DeleteMessagesUseCase,
+    HideMessagesUseCase,
+    HideMessagesService,
+    EditMessageUseCase,
+    ForwardMessagesUseCase,
   ],
 })
 export class MessagesModule {}

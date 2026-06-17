@@ -53,7 +53,21 @@ export class ChatMemberService {
       .execute();
   }
 
-  async findByProfileId(profileId: number) {
-    return await this.chatMemberRepository.findOne({ where: { profileId } });
+  async findByProfileId(profileId: number, chatId: number) {
+    return await this.chatMemberRepository.findOne({
+      where: { profileId, chatId },
+    });
+  }
+
+  async setLastReadMessage(
+    messageId: number,
+    memberId: number,
+    unreadCount?: number,
+    manager?: EntityManager,
+  ) {
+    await this.getRepo(manager).update(
+      { id: memberId },
+      { lastReadMessageId: messageId, lastReadAt: new Date(), unreadCount },
+    );
   }
 }

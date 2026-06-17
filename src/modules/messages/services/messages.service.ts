@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MessageEntity } from '../entities/messages.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 import { MessagesTypeEnum } from '../types/messages.interface';
 
 @Injectable()
@@ -25,6 +25,8 @@ export class MessagesService {
     contentId,
     manager,
     replyToMessageId,
+    forwardedFromId,
+    clientId,
   }: {
     chatId: number;
     senderMemberId: number;
@@ -32,7 +34,9 @@ export class MessagesService {
     replyToMessageId?: number;
     hasAttachments: boolean;
     type: MessagesTypeEnum;
+    forwardedFromId?: number;
     manager?: EntityManager;
+    clientId?: string;
   }) {
     const repo = this.getRepo(manager);
 
@@ -43,18 +47,92 @@ export class MessagesService {
       type,
       contentId,
       replyToMessageId,
+      forwardedFromMessageId: forwardedFromId,
+      clientId,
     });
 
     return await repo.save(message);
   }
 
-  async findMessageByChatId(
+  async ensureMessageBelongsToChat(
     chatId: number,
     messageId: number,
     manager?: EntityManager,
+    relations?: Array<'attachments' | 'content'>,
   ) {
-    return await this.getRepo(manager).findOne({
+    const message = await this.getRepo(manager).findOne({
       where: { id: messageId, chatId },
+      relations,
     });
+
+    if (!message)
+      throw new NotFoundException('Сообщение в данном чате не найдено');
+
+    return message;
+  }
+
+  async ensureMessagesBelongsToChat(
+    chatId: number,
+    messageIds: number[],
+    manager?: EntityManager,
+    relations?: Array<'attachments' | 'content'>,
+  ) {
+    const messages = await this.getRepo(manager).find({
+      where: {
+        chatId,
+        id: In(messageIds),
+      },
+      relations,
+    });
+
+    if (messages.length !== messageIds.length) {
+      throw new NotFoundException('Некоторые сообщения не принадлежат чату');
+    }
+
+    return messages;
+  }
+
+  async findMany(
+    messageIds: number[],
+    manager?: EntityManager,
+    relations?: Array<'attachments' | 'content'>,
+  ) {
+    return await this.getRepo(manager).find({
+      where: {
+        id: In(messageIds),
+      },
+      relations,
+    });
+  }
+
+  async messagesDelete(
+    chatId: number,
+    messageIds: number[],
+    manager?: EntityManager,
+  ) {
+    if (!messageIds.length) {
+      return;
+    }
+
+    await this.getRepo(manager).update(
+      {
+        chatId,
+        id: In(messageIds),
+      },
+      {
+        contentId: null,
+        hasAttachments: false,
+        replyToMessageId: null,
+        deletedAt: new Date(),
+      },
+    );
+  }
+
+  async messageUpdate(
+    messageId: number,
+    updatePayload: Partial<MessageEntity>,
+    manager?: EntityManager,
+  ) {
+    await this.getRepo(manager).update({ id: messageId }, updatePayload);
   }
 }

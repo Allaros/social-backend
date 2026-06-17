@@ -34,4 +34,16 @@ export class MessagesContentService {
 
     return repo.save(contentEntity);
   }
+
+  async hardDelete(contentIds: number[], manager?: EntityManager) {
+    await this.getRepo(manager).delete(contentIds);
+  }
+
+  async editContent(
+    contentId: number,
+    newText: string,
+    manager?: EntityManager,
+  ) {
+    await this.getRepo(manager).update({ id: contentId }, { content: newText });
+  }
 }

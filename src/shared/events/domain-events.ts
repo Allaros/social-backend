@@ -29,3 +29,7 @@ export const PresenceEvents = {
   USER_OFFLINE: 'presence.disconnect',
   USER_ONLINE: 'presence.connect',
 };
+
+export const MessagesEvents = {
+  MESSAGE_DELETED: 'message.deleted',
+};

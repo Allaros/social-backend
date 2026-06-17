@@ -23,6 +23,7 @@ export class MessageCreationService {
     senderMemberId,
     text,
     replyToMessageId,
+    clientId,
   }: {
     chatId: number;
 
@@ -33,6 +34,7 @@ export class MessageCreationService {
     attachments?: MessageAttachmentDto[];
 
     replyToMessageId?: number;
+    clientId?: string;
   }) {
     return this.dataSource.transaction(async (manager) => {
       let contentId: number | null = null;
@@ -56,6 +58,7 @@ export class MessageCreationService {
         type: MessagesTypeEnum.DEFAULT,
         contentId: contentId,
         replyToMessageId,
+        clientId,
         manager,
       });
 

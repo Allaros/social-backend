@@ -16,9 +16,13 @@ export class ResolveChatByIdentifierUseCase {
   async execute({
     identifier,
     currentProfileId,
+    options,
   }: {
     identifier: string;
     currentProfileId: number;
+    options?: {
+      relations?: Array<'members'>;
+    };
   }) {
     const groupChat = await this.chatService.findBySlug(identifier);
 
@@ -37,7 +41,10 @@ export class ResolveChatByIdentifierUseCase {
         ? buildSelfChatKey(currentProfileId)
         : buildDirectChatKey(currentProfileId, targetProfile.id);
 
-    const directChat = await this.chatService.findByDirectKey(directKey);
+    const directChat = await this.chatService.findByDirectKey(
+      directKey,
+      options?.relations,
+    );
 
     if (!directChat) {
       throw new NotFoundException('Чат не найден');

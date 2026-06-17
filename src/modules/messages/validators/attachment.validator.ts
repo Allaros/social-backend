@@ -41,6 +41,7 @@ export class MessageAttachmentValidator {
       'video/mp4',
       'audio/mpeg',
       'audio/ogg',
+      'audio/webm',
       'application/pdf',
     ];
 

@@ -28,11 +28,6 @@ export class ChatQueryService {
 
     qb.andWhere('chat.lastMessageAt IS NOT NULL');
 
-    qb.orderBy(
-      'COALESCE(chat.lastMessageAt, chat.createdAt)',
-      'DESC',
-    ).addOrderBy('chat.id', 'DESC');
-
     return qb;
   }
 
@@ -57,6 +52,21 @@ export class ChatQueryService {
         currentProfileId,
       })
       .getMany();
+  }
+
+  async getDirectTarget({
+    currentProfileId,
+    chatId,
+  }: {
+    currentProfileId: number;
+    chatId: number;
+  }) {
+    return this.chatMemberRepository
+      .createQueryBuilder('member')
+      .innerJoinAndSelect('member.profile', 'profile')
+      .where('member.chatId = :chatId', { chatId })
+      .andWhere('member.profileId != :currentProfileId', { currentProfileId })
+      .getOne();
   }
 
   applyIncludedIdentifiers(
@@ -152,28 +162,55 @@ export class ChatQueryService {
     return qb;
   }
 
-  applyLastMessageJoin(qb: SelectQueryBuilder<ChatMemberEntity>) {
+  applyLastVisibleMessageJoin(qb: SelectQueryBuilder<ChatMemberEntity>) {
     qb.leftJoin(
       'messages',
       'lm',
-      'lm.id = chat."lastMessageId" AND lm."deletedAt" IS NULL',
+      `
+      lm.id = (
+        SELECT m.id
+        FROM messages m
+        LEFT JOIN hidden_messages hm
+          ON hm."messageId" = m.id
+         AND hm."chatMemberId" = member.id
+        WHERE m."chatId" = chat.id
+          AND m."deletedAt" IS NULL
+          AND hm.id IS NULL
+        ORDER BY m."createdAt" DESC, m.id DESC
+        LIMIT 1
+      )
+    `,
     );
+
     qb.leftJoin('message_contents', 'lmc', 'lmc.id = lm."contentId"');
+
     qb.leftJoin(
       'chat_members',
       'lm_sender',
       'lm_sender.id = lm."senderMemberId"',
     );
+
     qb.leftJoin(
       'profiles',
       'lm_profile',
       'lm_profile.id = lm_sender."profileId"',
     );
 
-    qb.addSelect('lmc.content', 'lm_text');
+    qb.addSelect('lm.id', 'lm_id');
     qb.addSelect('lm."createdAt"', 'lm_createdAt');
+    qb.addSelect('lmc.content', 'lm_text');
     qb.addSelect('lm_profile.name', 'lm_senderName');
     qb.addSelect('lm_profile."avatarUrl"', 'lm_senderAvatarUrl');
+    qb.addSelect(
+      `
+  (
+    SELECT COUNT(*)
+    FROM message_attachments ma
+    WHERE ma."messageId" = lm.id
+  )
+  `,
+      'lm_attachmentsCount',
+    );
 
     return qb;
   }

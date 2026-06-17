@@ -5,6 +5,7 @@ import {
   IsArray,
   IsBoolean,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -102,4 +103,12 @@ export class GetMyChatsDto {
   @IsArray()
   @IsString({ each: true })
   includedIdentifiers?: string[];
+}
+
+export class SetLastReadMessageDto {
+  @IsNumber()
+  lastMessageId: number;
+
+  @IsArray()
+  messageIds: number[];
 }

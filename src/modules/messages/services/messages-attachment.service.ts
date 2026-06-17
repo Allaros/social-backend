@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MessageAttachmentEntity } from '../entities/messages-attachment.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 import { MessageAttachmentDto } from '../types/messages-attachment.dto';
 import { resolveAttachmentType } from '../helpers/attachment-type-resolver';
 
@@ -40,5 +40,13 @@ export class MessagesAttachmentService {
     );
 
     return repo.save(newAttachments);
+  }
+
+  async deleteMany(ids: number[], manager?: EntityManager) {
+    await this.getRepo(manager).delete(ids);
+  }
+
+  async findManyById(ids: number[], manager?: EntityManager) {
+    return await this.getRepo(manager).find({ where: { id: In(ids) } });
   }
 }

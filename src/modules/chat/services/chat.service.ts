@@ -40,8 +40,15 @@ export class ChatService {
     );
   }
 
-  async findByDirectKey(directKey: string, manager?: EntityManager) {
-    return await this.getRepo(manager).findOne({ where: { directKey } });
+  async findByDirectKey(
+    directKey: string,
+    relations?: Array<'members'>,
+    manager?: EntityManager,
+  ) {
+    return await this.getRepo(manager).findOne({
+      where: { directKey },
+      relations,
+    });
   }
 
   async findBySlug(slug: string, manager?: EntityManager) {

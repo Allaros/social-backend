@@ -22,6 +22,7 @@ import { MessageAttachmentEntity } from './messages-attachment.entity';
 @Index(['chatId', 'createdAt'])
 @Index(['senderMemberId'])
 @Index(['replyToMessageId'])
+@Index(['forwardedFromMessageId'])
 export class MessageEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -88,7 +89,7 @@ export class MessageEntity {
   hasAttachments: boolean;
 
   @Column({ nullable: true })
-  replyToMessageId?: number;
+  replyToMessageId?: number | null;
 
   @ManyToOne(() => MessageEntity, {
     nullable: true,
@@ -99,8 +100,17 @@ export class MessageEntity {
   })
   replyToMessage?: MessageEntity;
 
-  @Column({ default: false })
-  isEdited: boolean;
+  @Column({ nullable: true })
+  forwardedFromMessageId?: number | null;
+
+  @ManyToOne(() => MessageEntity, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({
+    name: 'forwardedFromMessageId',
+  })
+  forwardedFromMessage?: MessageEntity;
 
   @Column({ type: 'timestamptz', nullable: true })
   editedAt?: Date;

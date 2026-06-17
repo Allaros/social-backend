@@ -11,3 +11,8 @@ export enum MessageStatusEnum {
   SENT = 'sent',
   FAILED = 'failed',
 }
+
+export type ForwardPayload = {
+  id: number;
+  clientId?: string;
+};
