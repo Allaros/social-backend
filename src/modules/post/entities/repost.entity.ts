@@ -8,7 +8,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { PostEntity } from './post.entity';
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 
 @Entity('post_reposts')
 @Index(['profileId', 'postId'], { unique: true })

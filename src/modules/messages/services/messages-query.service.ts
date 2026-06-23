@@ -60,6 +60,21 @@ export class MessagesQueryService {
     return qb;
   }
 
+  applyLeftAtVisibility(
+    qb: SelectQueryBuilder<MessageEntity>,
+    leftAt?: Date | null,
+  ) {
+    if (!leftAt) {
+      return qb;
+    }
+
+    qb.andWhere('message."createdAt" <= :leftAt', {
+      leftAt,
+    });
+
+    return qb;
+  }
+
   applyHiddenMessagesFilter(
     qb: SelectQueryBuilder<MessageEntity>,
     memberId: number,

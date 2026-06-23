@@ -55,6 +55,7 @@ export class GetMessagesUseCase {
     }
 
     this.messagesQueryService.applyHiddenMessagesFilter(idsQb, member.id);
+    this.messagesQueryService.applyLeftAtVisibility(idsQb, member.leftAt);
 
     this.messagesQueryService.applyCursor(idsQb, cursor);
 

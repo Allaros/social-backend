@@ -10,7 +10,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ProfileEntity } from '../../profile/profile.entity';
+import { ProfileEntity } from '../../profile/entities/profile.entity';
 import { SavedPostEntity } from '@app/modules/post-saving/entities/saved_posts.entity';
 import { PostMediaEntity } from '@app/modules/post-media/entities/media.entity';
 import { PostRepostEntity } from './repost.entity';

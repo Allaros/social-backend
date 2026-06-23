@@ -39,7 +39,7 @@ export class CreateMessageUseCase {
     replyToMessageId?: number;
 
     attachments?: MessageAttachmentDto[];
-    clientId?: string;
+    clientId: string;
   }) {
     const chat = await this.resolveChatByIdentifier.execute({
       identifier: chatIdentifier,

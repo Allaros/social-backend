@@ -33,3 +33,7 @@ export const PresenceEvents = {
 export const MessagesEvents = {
   MESSAGE_DELETED: 'message.deleted',
 };
+
+export const ChatEvents = {
+  CHAT_MARKED_AS_DELETED: 'chat.marked-as-deleted',
+};

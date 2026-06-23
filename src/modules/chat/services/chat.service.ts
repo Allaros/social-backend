@@ -58,4 +58,23 @@ export class ChatService {
   async findById(id: number, manager?: EntityManager) {
     return await this.getRepo(manager).findOne({ where: { id } });
   }
+
+  async hardDelete(chatId: number, manager?: EntityManager) {
+    await this.getRepo(manager).delete({ id: chatId });
+  }
+
+  async softDelete(chatId: number, manager?: EntityManager) {
+    await this.getRepo(manager).update(
+      { id: chatId },
+      { deletedAt: new Date() },
+    );
+  }
+
+  async clearDirectKey(chatId: number, manager?: EntityManager) {
+    await this.getRepo(manager).update(chatId, { directKey: null });
+  }
+
+  async clearSlug(chatId: number, manager?: EntityManager) {
+    await this.getRepo(manager).update(chatId, { slug: null });
+  }
 }

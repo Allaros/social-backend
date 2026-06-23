@@ -27,6 +27,9 @@ export class ResolveChatByIdentifierUseCase {
     const groupChat = await this.chatService.findBySlug(identifier);
 
     if (groupChat) {
+      if (groupChat.deletedAt) {
+        throw new NotFoundException('Чат не найден');
+      }
       return groupChat;
     }
 
@@ -46,7 +49,7 @@ export class ResolveChatByIdentifierUseCase {
       options?.relations,
     );
 
-    if (!directChat) {
+    if (!directChat || directChat.deletedAt) {
       throw new NotFoundException('Чат не найден');
     }
 

@@ -10,7 +10,7 @@ import {
   ChatMemberRoleEnum,
   CreateChatMemberPayload,
 } from '../types/chat-member.interface';
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 import { ChatCreationService } from '../application/chat-creation.service';
 import { isPostgresUniqueViolation } from '@app/modules/profile/handlers/errorHandlers';
 import { ChatResponseBuilder } from '../builders/chat-response.builder';

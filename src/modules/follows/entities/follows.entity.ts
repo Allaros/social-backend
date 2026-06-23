@@ -10,7 +10,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { FollowStatus } from '../types/follows.interface';
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 
 @Entity('follows')
 @Unique('UQ_FOLLOWS_FOLLOWER_FOLLOWING', ['followerId', 'followingId'])

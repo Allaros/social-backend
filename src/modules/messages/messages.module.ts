@@ -22,6 +22,9 @@ import { HideMessagesService } from './services/hide-messages.service';
 import { HiddenMessageEntity } from './entities/hidden-message.entity';
 import { EditMessageUseCase } from './use-cases/edit-message.usecase';
 import { ForwardMessagesUseCase } from './use-cases/forward-messages.usecase';
+import { CleanupMessagesUseCase } from './use-cases/cleanup-messages.usecase';
+import { AttachmentCleanupService } from './application/attachments-cleanup.service';
+import { CreateSystemMessageUseCase } from './use-cases/create-system-message.usecase';
 
 @Module({
   imports: [
@@ -51,6 +54,14 @@ import { ForwardMessagesUseCase } from './use-cases/forward-messages.usecase';
     HideMessagesService,
     EditMessageUseCase,
     ForwardMessagesUseCase,
+    CleanupMessagesUseCase,
+    AttachmentCleanupService,
+    CreateSystemMessageUseCase,
+  ],
+  exports: [
+    MessagesService,
+    CleanupMessagesUseCase,
+    CreateSystemMessageUseCase,
   ],
 })
 export class MessagesModule {}

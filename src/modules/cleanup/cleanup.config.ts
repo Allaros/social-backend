@@ -3,5 +3,7 @@ export const cleanupConfig = {
     users: '0 */6 * * *',
     likes: '0 */6 * * *',
     notifications: '0 */6 * * *',
+    chats: '0 */6 * * *',
+    jobs: '0 */6 * * *',
   },
 };

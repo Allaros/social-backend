@@ -42,6 +42,12 @@ export class DeleteMessagesUseCase {
       profileId: currentProfileId,
     });
 
+    const persistedMessageIds = this.filterPersistedMessageIds(messageIds);
+
+    if (!persistedMessageIds.length) {
+      return;
+    }
+
     const messages = await this.messagesService.ensureMessagesBelongsToChat(
       chat.id,
       messageIds,
@@ -104,5 +110,9 @@ export class DeleteMessagesUseCase {
 
   private getActiveMessages(messages: MessageEntity[]) {
     return messages.filter((message) => !message.deletedAt);
+  }
+
+  private filterPersistedMessageIds(messageIds: number[]) {
+    return messageIds.filter((id) => id > 0);
   }
 }

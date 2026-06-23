@@ -34,7 +34,7 @@ export class MessageCreationService {
     attachments?: MessageAttachmentDto[];
 
     replyToMessageId?: number;
-    clientId?: string;
+    clientId: string;
   }) {
     return this.dataSource.transaction(async (manager) => {
       let contentId: number | null = null;

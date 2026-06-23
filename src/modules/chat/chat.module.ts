@@ -21,6 +21,10 @@ import { ResolveChatByIdentifierUseCase } from './use-cases/resolve-chat-by-iden
 import { WebsocketModule } from '../websocket/websocket.module';
 import { GetActiveChatUseCase } from './use-cases/get-active-chat.usecase';
 import { SetLastReadMessageUseCase } from './use-cases/set-last-read-message';
+import { DeleteDirectUseCase } from './use-cases/delete-direct.usecase';
+import { GroupChatDeleteUseCase } from './use-cases/group-chat-delete.usecase';
+import { ChatRestrictionSchedulerService } from './application/chat-restriction-scheduler.service';
+import { ToggleChatNotificationsUseCase } from './use-cases/toggle-chat-notifications.usecase';
 
 @Module({
   imports: [
@@ -46,6 +50,10 @@ import { SetLastReadMessageUseCase } from './use-cases/set-last-read-message';
     ResolveChatByIdentifierUseCase,
     GetActiveChatUseCase,
     SetLastReadMessageUseCase,
+    DeleteDirectUseCase,
+    GroupChatDeleteUseCase,
+    ChatRestrictionSchedulerService,
+    ToggleChatNotificationsUseCase,
   ],
   exports: [
     ChatService,

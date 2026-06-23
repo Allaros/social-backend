@@ -1,5 +1,5 @@
 import { PostEntity } from '@app/modules/post/entities/post.entity';
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 import {
   Column,
   CreateDateColumn,

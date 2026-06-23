@@ -12,11 +12,11 @@ export class LikeCleanupService {
     await this.dataSource.query(`
 			 DELETE FROM likes l
       WHERE 
-        (l.targetType = 'post' AND NOT EXISTS (
+        (l."targetType" = 'post' AND NOT EXISTS (
           SELECT 1 FROM posts p WHERE p.id = l.targetId
         ))
         OR
-        (l.targetType = 'comment' AND NOT EXISTS (
+        (l."targetType" = 'comment' AND NOT EXISTS (
           SELECT 1 FROM comments c WHERE c.id = l.targetId
         ))
 	`);

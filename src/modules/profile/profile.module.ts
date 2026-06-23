@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ProfileService } from './services/profile.service';
 import { ProfileController } from './profile.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProfileEntity } from './profile.entity';
+import { ProfileEntity } from './entities/profile.entity';
 import { FileModule } from '../file/file.module';
 import { ProfileCounterUpdateListener } from './listeners/profile-counter-update.listener';
 import { FindProfilesUseCase } from './use-cases/find-profiles.usecase';

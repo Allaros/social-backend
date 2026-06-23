@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ProfileEntity } from '../profile.entity';
+import { ProfileEntity } from '../entities/profile.entity';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 
 @Injectable()

@@ -29,7 +29,7 @@ export class MessagesService {
     clientId,
   }: {
     chatId: number;
-    senderMemberId: number;
+    senderMemberId: number | null;
     contentId: number | null;
     replyToMessageId?: number;
     hasAttachments: boolean;
@@ -128,11 +128,41 @@ export class MessagesService {
     );
   }
 
+  async messagesHardDelete(
+    chatId: number,
+    messageIds: number[],
+    manager?: EntityManager,
+  ) {
+    if (!messageIds.length) {
+      return;
+    }
+
+    await this.getRepo(manager).delete({
+      chatId,
+      id: In(messageIds),
+    });
+  }
+
   async messageUpdate(
     messageId: number,
     updatePayload: Partial<MessageEntity>,
     manager?: EntityManager,
   ) {
     await this.getRepo(manager).update({ id: messageId }, updatePayload);
+  }
+
+  async getBatchIdsForDeletion(
+    chatId: number,
+    limit: number,
+  ): Promise<number[]> {
+    const rows = await this.messagesRepository
+      .createQueryBuilder('message')
+      .select('message.id', 'id')
+      .where('message.chatId = :chatId', { chatId })
+      .orderBy('message.id', 'ASC')
+      .limit(limit)
+      .getRawMany<{ id: number }>();
+
+    return rows.map((row) => Number(row.id));
   }
 }

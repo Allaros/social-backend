@@ -1,4 +1,4 @@
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 import {
   Entity,
   Index,

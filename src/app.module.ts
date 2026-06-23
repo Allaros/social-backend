@@ -19,6 +19,8 @@ import { FollowsModule } from './modules/follows/follows.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
 import { MessagesModule } from './modules/messages/messages.module';
+import { ChatDeletionModule } from './modules/chat-deletion/chat-deletion.module';
+import { ChatSystemModule } from './modules/chat-system/chat-system.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { MessagesModule } from './modules/messages/messages.module';
     NotificationModule,
     CleanupModule,
     MessagesModule,
+    ChatDeletionModule,
+    ChatSystemModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

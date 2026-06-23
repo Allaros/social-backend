@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 import { ChatEntity } from './chat.entity';
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 import { ChatMemberRoleEnum } from '../types/chat-member.interface';
 
 @Entity('chat_members')
@@ -73,7 +73,7 @@ export class ChatMemberEntity {
   joinedAt?: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
-  leftAt?: Date;
+  leftAt?: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

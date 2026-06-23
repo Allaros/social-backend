@@ -14,11 +14,11 @@ export class NotificationsCleanupService {
     WHERE
       n."createdAt" < NOW() - INTERVAL '10 minutes'
       AND (
-        (n."entityType" = 'post' AND NOT EXISTS (
+        (n."entityType" = 'posts' AND NOT EXISTS (
           SELECT 1 FROM posts p WHERE p.id = n."entityId"
         ))
         OR
-        (n."entityType" = 'comment' AND NOT EXISTS (
+        (n."entityType" = 'post_comments' AND NOT EXISTS (
           SELECT 1 FROM comments c WHERE c.id = n."entityId"
         ))
       )

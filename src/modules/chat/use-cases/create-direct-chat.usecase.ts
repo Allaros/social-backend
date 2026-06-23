@@ -7,7 +7,7 @@ import {
   buildSelfChatKey,
 } from '../builders/chat-key.builder';
 import { ChatMemberRoleEnum } from '../types/chat-member.interface';
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 import { isPostgresUniqueViolation } from '@app/modules/profile/handlers/errorHandlers';
 import { ChatCreationService } from '../application/chat-creation.service';
 import { ChatResponseBuilder } from '../builders/chat-response.builder';

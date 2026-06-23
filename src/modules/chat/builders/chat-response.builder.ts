@@ -4,7 +4,7 @@ import { ChatMemberEntity } from '../entities/chat-member.entity';
 import { ChatListItem, ChatTypeEnum } from '../types/chat.interface';
 import { StorageService } from '@app/modules/file/services/storage.service';
 import { BucketName } from '@app/modules/file/types/file.interface';
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 import { SELF_CHAT_KEY_PREFIX } from './chat-key.builder';
 
 type LastMessagePreview = {
@@ -109,6 +109,7 @@ export class ChatResponseBuilder {
           : null,
         isOnline,
         identifier: this.resolveIdentifier(chat, targetProfile),
+        isDeleted: chat.deletedAt,
       };
     });
   }
@@ -119,12 +120,18 @@ export class ChatResponseBuilder {
     target,
     isOnline,
     isSelfChat,
+    isMuted,
+    isLeft,
+    canSendMessages,
   }: {
     chat: ChatEntity;
     type: ChatTypeEnum;
     target: ProfileEntity | null;
     isOnline: boolean;
     isSelfChat: boolean;
+    isMuted: boolean;
+    isLeft: boolean;
+    canSendMessages: boolean;
   }) {
     const base = {
       id: chat.id,
@@ -143,7 +150,10 @@ export class ChatResponseBuilder {
         lastSeenAt: null,
         isOnline: false,
         isSelfChat: true,
+        isMuted,
         description: null,
+        isLeft,
+        canSendMessages,
       };
     }
 
@@ -157,7 +167,10 @@ export class ChatResponseBuilder {
         lastSeenAt: target?.lastSeenAt ?? null,
         isOnline,
         isSelfChat: false,
+        isMuted,
         description: null,
+        isLeft,
+        canSendMessages,
       };
     }
 
@@ -177,7 +190,10 @@ export class ChatResponseBuilder {
       lastSeenAt: null,
       isOnline: false,
       isSelfChat: false,
+      isMuted,
       description: chat.description ?? null,
+      isLeft,
+      canSendMessages,
     };
   }
 

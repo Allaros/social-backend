@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ProfileEntity } from '../profile.entity';
+import { ProfileEntity } from '../entities/profile.entity';
 import { ProfileCalculatedFields } from '../types/profile.interface';
 
 @Injectable()

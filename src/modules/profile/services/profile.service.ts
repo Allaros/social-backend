@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, In, Repository } from 'typeorm';
-import { ProfileEntity } from '../profile.entity';
+import { ProfileEntity } from '../entities/profile.entity';
 import { ProfileCounterField } from '../types/profile.interface';
 import { CounterUpdater } from '@app/shared/database/counter-updater';
 

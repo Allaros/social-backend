@@ -12,8 +12,8 @@ export class MessagesCleanupListener {
 
   @OnEvent(MessagesEvents.MESSAGE_DELETED)
   async deleteAttachments(event: MessageDeletedEvent) {
-    await this.attachmentsCleanupService.cleanupAttachments(
-      event.attachmentsIds,
-    );
+    await this.attachmentsCleanupService.cleanupAttachments({
+      attachmentIds: event.attachmentsIds,
+    });
   }
 }

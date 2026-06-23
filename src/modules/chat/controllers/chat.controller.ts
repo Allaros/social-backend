@@ -3,6 +3,7 @@ import { EmailVerifiedGuard } from '@app/modules/auth/guards/email-verified.guar
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -27,6 +28,9 @@ import {
 import { GetMyChatsUseCase } from '../use-cases/get-my-chats.usecase';
 import { GetActiveChatUseCase } from '../use-cases/get-active-chat.usecase';
 import { SetLastReadMessageUseCase } from '../use-cases/set-last-read-message';
+import { DeleteDirectUseCase } from '../use-cases/delete-direct.usecase';
+import { GroupChatDeleteUseCase } from '../use-cases/group-chat-delete.usecase';
+import { ToggleChatNotificationsUseCase } from '../use-cases/toggle-chat-notifications.usecase';
 
 @Controller('chats')
 @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
@@ -39,6 +43,9 @@ export class ChatsController {
     private readonly getMyChatsUseCase: GetMyChatsUseCase,
     private readonly getActiveChatUseCase: GetActiveChatUseCase,
     private readonly setLastReadMessageUseCase: SetLastReadMessageUseCase,
+    private readonly deleteDirectUseCase: DeleteDirectUseCase,
+    private readonly groupChatDeleteUseCase: GroupChatDeleteUseCase,
+    private readonly toggleChatNotificationsUseCase: ToggleChatNotificationsUseCase,
   ) {}
 
   @Get()
@@ -107,6 +114,39 @@ export class ChatsController {
       currentProfileId: user.profile.id,
       lastMessageId: dto.lastMessageId,
       messageIds: dto.messageIds,
+    });
+  }
+
+  @Delete(':identifier/delete/direct')
+  async deleteDirectChat(
+    @Param('identifier') chatIdentifier: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    await this.deleteDirectUseCase.execute({
+      chatIdentifier,
+      currentProfileId: user.profile.id,
+    });
+  }
+
+  @Delete(':identifier/delete/direct')
+  async deleteGroupChat(
+    @Param('identifier') chatIdentifier: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    await this.groupChatDeleteUseCase.execute({
+      chatIdentifier,
+      currentProfileId: user.profile.id,
+    });
+  }
+
+  @Put(':identifier/toggle-mute')
+  async toggleMute(
+    @Param('identifier') chatIdentifier: string,
+    @CurrentUser() user: UserEntity,
+  ) {
+    await this.toggleChatNotificationsUseCase.execute({
+      chatIdentifier,
+      currentProfileId: user.profile.id,
     });
   }
 }

@@ -22,17 +22,19 @@ export class ChatEntity {
   type: ChatTypeEnum;
 
   @Column({
+    type: 'varchar',
     unique: true,
     nullable: true,
   })
-  directKey?: string;
+  directKey: string | null;
 
   @Column({
+    type: 'varchar',
     unique: true,
     nullable: true,
     length: 120,
   })
-  slug?: string;
+  slug: string | null;
 
   @Column({ default: false })
   isPublic: boolean;
@@ -60,6 +62,11 @@ export class ChatEntity {
 
   @Column({ default: 0 })
   membersCount: number;
+
+  @Column({
+    nullable: true,
+  })
+  deletedAt?: Date;
 
   @CreateDateColumn()
   createdAt: Date;

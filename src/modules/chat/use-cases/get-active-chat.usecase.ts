@@ -22,10 +22,16 @@ export class GetActiveChatUseCase {
       currentProfileId,
     });
 
-    await this.chatPermissionService.ensureMember({
+    const member = await this.chatPermissionService.ensureMember({
       chatId: chat.id,
       profileId: currentProfileId,
     });
+
+    const isLeft = !!member.leftAt;
+
+    let canSendMessages = !isLeft;
+
+    const isMuted = member.isNotificationsMuted;
 
     switch (chat.type) {
       case ChatTypeEnum.DIRECT: {
@@ -33,6 +39,7 @@ export class GetActiveChatUseCase {
           currentProfileId,
           chatId: chat.id,
         });
+        canSendMessages = !isLeft && !target?.leftAt;
         const isSelfChat = !target;
 
         if (isSelfChat) {
@@ -42,6 +49,9 @@ export class GetActiveChatUseCase {
             target: null,
             isOnline: false,
             isSelfChat: true,
+            isMuted,
+            isLeft,
+            canSendMessages,
           });
         }
 
@@ -55,6 +65,9 @@ export class GetActiveChatUseCase {
           target: target.profile,
           isOnline,
           isSelfChat: false,
+          isMuted,
+          isLeft,
+          canSendMessages,
         });
       }
       case ChatTypeEnum.CHANNEL:
@@ -65,6 +78,9 @@ export class GetActiveChatUseCase {
           target: null,
           isOnline: false,
           isSelfChat: false,
+          isMuted,
+          isLeft,
+          canSendMessages,
         });
       }
     }

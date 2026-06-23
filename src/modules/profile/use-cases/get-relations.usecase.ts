@@ -11,7 +11,7 @@ import {
 import { PresenceStateService } from '@app/modules/websocket/services/presence-state.service';
 import { PaginationExecutor } from '@app/shared/cursor/helpers/pagination-executor';
 import { SelectQueryBuilder } from 'typeorm';
-import { ProfileEntity } from '../profile.entity';
+import { ProfileEntity } from '../entities/profile.entity';
 
 type RelationsCursor = {
   createdAt: string;

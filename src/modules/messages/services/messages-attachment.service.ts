@@ -49,4 +49,25 @@ export class MessagesAttachmentService {
   async findManyById(ids: number[], manager?: EntityManager) {
     return await this.getRepo(manager).find({ where: { id: In(ids) } });
   }
+
+  async getStorageKeysUsage(storageKeys: string[]) {
+    if (!storageKeys.length) {
+      return new Map<string, number>();
+    }
+
+    const rows = await this.messagesAttachmentRepository
+      .createQueryBuilder('attachment')
+      .select('attachment.storageKey', 'storageKey')
+      .addSelect('COUNT(*)', 'count')
+      .where('attachment.storageKey IN (:...storageKeys)', {
+        storageKeys,
+      })
+      .groupBy('attachment.storageKey')
+      .getRawMany<{
+        storageKey: string;
+        count: string;
+      }>();
+
+    return new Map(rows.map((row) => [row.storageKey, Number(row.count)]));
+  }
 }

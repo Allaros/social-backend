@@ -51,7 +51,7 @@ export class ChatPermissionService {
       manager,
     });
 
-    if (!member || member.leftAt) {
+    if (!member || member.restrictedUntil) {
       throw new ForbiddenException('Вы не являетесь участником чата');
     }
 

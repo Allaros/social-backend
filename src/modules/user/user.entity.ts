@@ -9,7 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { ProviderEntity } from '@app/modules/auth/provider.entity';
-import { ProfileEntity } from '@app/modules/profile/profile.entity';
+import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 import { VerificationEntity } from '@app/modules/verification/verification.entity';
 import { SessionEntity } from '../auth/session.entity';
 

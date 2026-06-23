@@ -29,9 +29,8 @@ export class CreateMessageDto {
   @IsNumber()
   replyToMessageId?: number;
 
-  @IsOptional()
   @IsString()
-  clientId?: string;
+  clientId: string;
 }
 
 export class GetMessagesDto {

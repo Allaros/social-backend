@@ -39,7 +39,7 @@ export class MessageEntity {
   chat: ChatEntity;
 
   @Column({ nullable: true })
-  senderMemberId: number;
+  senderMemberId: number | null;
 
   @ManyToOne(() => ChatMemberEntity, {
     onDelete: 'SET NULL',

@@ -10,11 +10,11 @@ import {
   OneToMany,
 } from 'typeorm';
 import { UserEntity } from '@app/modules/user/user.entity';
-import { PostEntity } from '../post/entities/post.entity';
-import { PostRepostEntity } from '../post/entities/repost.entity';
-import { SavedPostEntity } from '../post-saving/entities/saved_posts.entity';
-import { CommentEntity } from '../post-comments/entities/comment.entity';
-import { FollowsEntity } from '../follows/entities/follows.entity';
+import { PostEntity } from '../../post/entities/post.entity';
+import { PostRepostEntity } from '../../post/entities/repost.entity';
+import { SavedPostEntity } from '../../post-saving/entities/saved_posts.entity';
+import { CommentEntity } from '../../post-comments/entities/comment.entity';
+import { FollowsEntity } from '../../follows/entities/follows.entity';
 
 @Entity('profiles')
 export class ProfileEntity {

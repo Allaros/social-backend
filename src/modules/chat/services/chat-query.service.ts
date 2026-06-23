@@ -28,6 +28,8 @@ export class ChatQueryService {
 
     qb.andWhere('chat.lastMessageAt IS NOT NULL');
 
+    qb.andWhere('chat.deletedAt IS NULL');
+
     return qb;
   }
 
@@ -169,15 +171,19 @@ export class ChatQueryService {
       `
       lm.id = (
         SELECT m.id
-        FROM messages m
-        LEFT JOIN hidden_messages hm
-          ON hm."messageId" = m.id
-         AND hm."chatMemberId" = member.id
-        WHERE m."chatId" = chat.id
-          AND m."deletedAt" IS NULL
-          AND hm.id IS NULL
-        ORDER BY m."createdAt" DESC, m.id DESC
-        LIMIT 1
+FROM messages m
+LEFT JOIN hidden_messages hm
+  ON hm."messageId" = m.id
+ AND hm."chatMemberId" = member.id
+WHERE m."chatId" = chat.id
+  AND m."deletedAt" IS NULL
+  AND hm.id IS NULL
+  AND (
+    member."leftAt" IS NULL
+    OR m."createdAt" <= member."leftAt"
+  )
+ORDER BY m."createdAt" DESC, m.id DESC
+LIMIT 1
       )
     `,
     );
@@ -200,6 +206,7 @@ export class ChatQueryService {
     qb.addSelect('lm."createdAt"', 'lm_createdAt');
     qb.addSelect('lmc.content', 'lm_text');
     qb.addSelect('lm_profile.name', 'lm_senderName');
+    qb.addSelect('lm.type', 'lm_type');
     qb.addSelect('lm_profile."avatarUrl"', 'lm_senderAvatarUrl');
     qb.addSelect(
       `
