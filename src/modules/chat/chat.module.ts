@@ -25,6 +25,11 @@ import { DeleteDirectUseCase } from './use-cases/delete-direct.usecase';
 import { GroupChatDeleteUseCase } from './use-cases/group-chat-delete.usecase';
 import { ChatRestrictionSchedulerService } from './application/chat-restriction-scheduler.service';
 import { ToggleChatNotificationsUseCase } from './use-cases/toggle-chat-notifications.usecase';
+import { GetChatAvatarUploadUrlUseCase } from './use-cases/get-chat-avatar-upload-url.usecase';
+import { GetParticipantsUseCase } from './use-cases/get-participants.usecase';
+import { ChatMemberQueryService } from './services/chat-member-query.service';
+import { ChatMemberResponseBuilder } from './builders/chat-member-response.builder';
+import { GetMemberToAddUseCase } from './use-cases/get-members-to-add.usecase';
 
 @Module({
   imports: [
@@ -54,6 +59,11 @@ import { ToggleChatNotificationsUseCase } from './use-cases/toggle-chat-notifica
     GroupChatDeleteUseCase,
     ChatRestrictionSchedulerService,
     ToggleChatNotificationsUseCase,
+    GetChatAvatarUploadUrlUseCase,
+    GetParticipantsUseCase,
+    ChatMemberQueryService,
+    ChatMemberResponseBuilder,
+    GetMemberToAddUseCase,
   ],
   exports: [
     ChatService,

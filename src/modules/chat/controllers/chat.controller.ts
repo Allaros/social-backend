@@ -23,6 +23,7 @@ import {
   CreateDirectChatDto,
   CreateGroupChatDto,
   GetMyChatsDto,
+  GetParticipantsDto,
   SetLastReadMessageDto,
 } from '../types/chat.dto';
 import { GetMyChatsUseCase } from '../use-cases/get-my-chats.usecase';
@@ -31,6 +32,9 @@ import { SetLastReadMessageUseCase } from '../use-cases/set-last-read-message';
 import { DeleteDirectUseCase } from '../use-cases/delete-direct.usecase';
 import { GroupChatDeleteUseCase } from '../use-cases/group-chat-delete.usecase';
 import { ToggleChatNotificationsUseCase } from '../use-cases/toggle-chat-notifications.usecase';
+import { GetChatAvatarUploadUrlUseCase } from '../use-cases/get-chat-avatar-upload-url.usecase';
+import { GetParticipantsUseCase } from '../use-cases/get-participants.usecase';
+import { GetMemberToAddUseCase } from '../use-cases/get-members-to-add.usecase';
 
 @Controller('chats')
 @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
@@ -46,7 +50,17 @@ export class ChatsController {
     private readonly deleteDirectUseCase: DeleteDirectUseCase,
     private readonly groupChatDeleteUseCase: GroupChatDeleteUseCase,
     private readonly toggleChatNotificationsUseCase: ToggleChatNotificationsUseCase,
+    private readonly getChatAvatarUploadUrlUseCase: GetChatAvatarUploadUrlUseCase,
+    private readonly getParticipantsUseCase: GetParticipantsUseCase,
+    private readonly getMemberToAddUseCase: GetMemberToAddUseCase,
   ) {}
+
+  @Get('avatar-upload-url')
+  async getAvatarUploadUrl(@Query('mimeType') mimeType: string) {
+    return await this.getChatAvatarUploadUrlUseCase.execute({
+      mimeType,
+    });
+  }
 
   @Get()
   getMyChats(@CurrentUser() user: UserEntity, @Query() query: GetMyChatsDto) {
@@ -59,14 +73,6 @@ export class ChatsController {
       limit: query.limit,
       includedIdentifiers: query.includedIdentifiers,
     });
-  }
-
-  @Get(':identifier')
-  getActiveChat(
-    @CurrentUser() user: UserEntity,
-    @Param('identifier') identifier: string,
-  ) {
-    return this.getActiveChatUseCase.execute(user.profile.id, identifier);
   }
 
   @Post('direct')
@@ -90,7 +96,7 @@ export class ChatsController {
       avatarStorageKey: body.avatarStorageKey,
       description: body.description,
       isPublic: body.isPublic,
-      invitedProfilesIds: body.invitedProfilesIds,
+      invitedProfileIds: body.invitedProfileIds,
     });
   }
 
@@ -128,7 +134,7 @@ export class ChatsController {
     });
   }
 
-  @Delete(':identifier/delete/direct')
+  @Delete(':identifier/delete/group')
   async deleteGroupChat(
     @Param('identifier') chatIdentifier: string,
     @CurrentUser() user: UserEntity,
@@ -148,5 +154,43 @@ export class ChatsController {
       chatIdentifier,
       currentProfileId: user.profile.id,
     });
+  }
+
+  @Get(':identifier/members')
+  async getParticipants(
+    @Param('identifier') chatIdentifier: string,
+    @CurrentUser() user: UserEntity,
+    @Query() query: GetParticipantsDto,
+  ) {
+    return this.getParticipantsUseCase.execute({
+      chatIdentifier,
+      currentProfileId: user.profile.id,
+      limit: query.limit,
+      cursor: query.cursor,
+    });
+  }
+
+  @Get(':identifier/members-to-add')
+  async getMembersToAdd(
+    @Param('identifier') chatIdentifier: string,
+    @CurrentUser() user: UserEntity,
+    @Query('query') query?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.getMemberToAddUseCase.execute({
+      chatIdentifier,
+      currentProfileId: user.profile.id,
+      query,
+      cursor,
+      limit: 20,
+    });
+  }
+
+  @Get(':identifier')
+  getActiveChat(
+    @CurrentUser() user: UserEntity,
+    @Param('identifier') identifier: string,
+  ) {
+    return this.getActiveChatUseCase.execute(user.profile.id, identifier);
   }
 }

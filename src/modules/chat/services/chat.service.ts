@@ -51,8 +51,12 @@ export class ChatService {
     });
   }
 
-  async findBySlug(slug: string, manager?: EntityManager) {
-    return await this.getRepo(manager).findOne({ where: { slug } });
+  async findBySlug(
+    slug: string,
+    relations?: Array<'members'>,
+    manager?: EntityManager,
+  ) {
+    return await this.getRepo(manager).findOne({ where: { slug }, relations });
   }
 
   async findById(id: number, manager?: EntityManager) {

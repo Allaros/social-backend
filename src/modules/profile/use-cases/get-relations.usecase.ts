@@ -5,8 +5,8 @@ import { CursorCodec } from '@app/shared/cursor/codec/cursor-codec';
 import { ProfileResponseBuilder } from '../builders/profile-response.builder';
 import {
   ProfileListItem,
-  ProfileRawRow,
   ProfileRelationType,
+  RelationRawRow,
 } from '../types/profile.interface';
 import { PresenceStateService } from '@app/modules/websocket/services/presence-state.service';
 import { PaginationExecutor } from '@app/shared/cursor/helpers/pagination-executor';
@@ -22,12 +22,6 @@ const relationsCursorCodec = new CursorCodec<RelationsCursor>([
   'createdAt',
   'id',
 ]);
-
-type RelationRawRow = ProfileRawRow & {
-  profile_id: number;
-  friend_created_at?: string;
-  follow_created_at?: string;
-};
 
 @Injectable()
 export class GetRelationsUseCase {

@@ -41,7 +41,7 @@ export class CreateGroupChatDto {
   @ArrayMaxSize(100)
   @IsInt({ each: true })
   @Min(1, { each: true })
-  invitedProfilesIds: number[];
+  invitedProfileIds: number[];
 }
 
 export class CreateChannelDto {
@@ -111,4 +111,17 @@ export class SetLastReadMessageDto {
 
   @IsArray()
   messageIds: number[];
+}
+
+export class GetParticipantsDto {
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit = 20;
 }

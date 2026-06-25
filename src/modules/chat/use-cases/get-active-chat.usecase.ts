@@ -5,6 +5,7 @@ import { ChatPermissionService } from '../services/chat-permission.service';
 import { ChatQueryService } from '../services/chat-query.service';
 import { ChatResponseBuilder } from '../builders/chat-response.builder';
 import { PresenceStateService } from '@app/modules/websocket/services/presence-state.service';
+import { ChatMemberRoleEnum } from '../types/chat-member.interface';
 
 @Injectable()
 export class GetActiveChatUseCase {
@@ -32,6 +33,7 @@ export class GetActiveChatUseCase {
     let canSendMessages = !isLeft;
 
     const isMuted = member.isNotificationsMuted;
+    const isOwner = member.role === ChatMemberRoleEnum.OWNER;
 
     switch (chat.type) {
       case ChatTypeEnum.DIRECT: {
@@ -52,6 +54,7 @@ export class GetActiveChatUseCase {
             isMuted,
             isLeft,
             canSendMessages,
+            isOwner,
           });
         }
 
@@ -68,6 +71,7 @@ export class GetActiveChatUseCase {
           isMuted,
           isLeft,
           canSendMessages,
+          isOwner,
         });
       }
       case ChatTypeEnum.CHANNEL:
@@ -81,6 +85,7 @@ export class GetActiveChatUseCase {
           isMuted,
           isLeft,
           canSendMessages,
+          isOwner,
         });
       }
     }

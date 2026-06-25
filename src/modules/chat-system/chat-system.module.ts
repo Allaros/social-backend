@@ -8,6 +8,8 @@ import { AddMemberUseCase } from './use-cases/add-member.usecase';
 import { KickMemberUseCase } from './use-cases/kick-member.usecase';
 import { UnrestrictMemberUseCase } from './use-cases/unrestrict-member.usecase';
 import { ProfileModule } from '../profile/profile.module';
+import { InitiateGroupChatUseCase } from './use-cases/initiate-group-chat.usecase';
+import { ChatCreationListener } from './listeners/chat-creation.listener';
 
 @Module({
   imports: [MessagesModule, ChatModule, ProfileModule],
@@ -18,6 +20,8 @@ import { ProfileModule } from '../profile/profile.module';
     AddMemberUseCase,
     KickMemberUseCase,
     UnrestrictMemberUseCase,
+    InitiateGroupChatUseCase,
+    ChatCreationListener,
   ],
 })
 export class ChatSystemModule {}

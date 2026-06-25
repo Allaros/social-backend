@@ -34,6 +34,12 @@ export type ProfileRawRow = {
   is_follower: boolean;
 };
 
+export type RelationRawRow = ProfileRawRow & {
+  profile_id: number;
+  friend_created_at?: string;
+  follow_created_at?: string;
+};
+
 export type ProfileCalculatedFields = {
   isOwner?: boolean;
   isFollowed?: boolean;

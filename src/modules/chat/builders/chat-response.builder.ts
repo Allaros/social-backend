@@ -123,6 +123,7 @@ export class ChatResponseBuilder {
     isMuted,
     isLeft,
     canSendMessages,
+    isOwner,
   }: {
     chat: ChatEntity;
     type: ChatTypeEnum;
@@ -132,6 +133,7 @@ export class ChatResponseBuilder {
     isMuted: boolean;
     isLeft: boolean;
     canSendMessages: boolean;
+    isOwner: boolean;
   }) {
     const base = {
       id: chat.id,
@@ -154,6 +156,7 @@ export class ChatResponseBuilder {
         description: null,
         isLeft,
         canSendMessages,
+        isOwner,
       };
     }
 
@@ -171,6 +174,7 @@ export class ChatResponseBuilder {
         description: null,
         isLeft,
         canSendMessages,
+        isOwner,
       };
     }
 
@@ -194,6 +198,7 @@ export class ChatResponseBuilder {
       description: chat.description ?? null,
       isLeft,
       canSendMessages,
+      isOwner,
     };
   }
 

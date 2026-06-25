@@ -63,10 +63,13 @@ export class UnrestrictMemberUseCase {
 
     this.chatPermissionService.ensureOwner(actorMember);
 
-    const targetMember = await this.chatPermissionService.ensureMember({
+    const targetMember = await this.chatPermissionService.getMember({
       chatId: chat.id,
       profileId: targetProfileId,
     });
+
+    if (!targetMember)
+      throw new NotFoundException('Пользователь чата не найден');
 
     if (targetMember.role === ChatMemberRoleEnum.OWNER) {
       throw new BadRequestException('Нельзя управлять владельцем чата');

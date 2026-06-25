@@ -36,6 +36,12 @@ import { GetRelationsUseCase } from './use-cases/get-relations.usecase';
     ProfileStatusListener,
     GetRelationsUseCase,
   ],
-  exports: [ProfileService, FindProfilesUseCase, CreateProfileUseCase],
+  exports: [
+    ProfileService,
+    FindProfilesUseCase,
+    CreateProfileUseCase,
+    ProfileQueryService,
+    ProfileResponseBuilder,
+  ],
 })
 export class ProfileModule {}

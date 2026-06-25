@@ -24,7 +24,10 @@ export class ResolveChatByIdentifierUseCase {
       relations?: Array<'members'>;
     };
   }) {
-    const groupChat = await this.chatService.findBySlug(identifier);
+    const groupChat = await this.chatService.findBySlug(
+      identifier,
+      options?.relations,
+    );
 
     if (groupChat) {
       if (groupChat.deletedAt) {

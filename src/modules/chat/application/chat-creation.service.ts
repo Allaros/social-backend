@@ -20,6 +20,8 @@ export class ChatCreationService {
     chatPayload: CreateChatPayload;
     membersPayload: CreateChatMemberPayload[];
   }) {
+    console.log(chatPayload);
+    console.log(membersPayload);
     return this.dataSource.transaction(async (manager) => {
       const chat = await this.chatService.create(chatPayload, manager);
 

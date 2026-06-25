@@ -1,21 +1,22 @@
-import { UserService } from '@app/modules/user/user.service';
-import { ConfigService } from '@nestjs/config';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
-import { authenticateSocket } from '../helpers/websocket-auth.helper';
-import { AppSocket } from '../types/ws.types';
-import { WsRoomBuilder } from '../builders/ws-room.builder';
+import { PresenceCacheService } from '../services/presence-cache.service';
+import { ConfigService } from '@nestjs/config';
+import { UserService } from '@app/modules/user/user.service';
 import EventEmitter2 from 'eventemitter2';
-import { WsSystemEvents } from '@app/shared/events/ws-events';
-import { WsDisconnectedEvent } from '../events/ws-disconnected.event';
-import { UnauthorizedException } from '@nestjs/common';
+import { AppSocket } from '../types/ws.types';
+import { authenticateSocket } from '../helpers/websocket-auth.helper';
+import { WsRoomBuilder } from '../builders/ws-room.builder';
 import { UserOnlineEvent } from '@app/modules/presence/events/user-online.event';
 import { PresenceEvents } from '@app/shared/events/domain-events';
+import { UnauthorizedException } from '@nestjs/common';
+import { WsSystemEvents } from '@app/shared/events/ws-events';
+import { WsDisconnectedEvent } from '../events/ws-disconnected.event';
+import { Server } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
@@ -30,6 +31,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   constructor(
+    private readonly presenceCacheService: PresenceCacheService,
     private readonly configService: ConfigService,
     private readonly userService: UserService,
     private readonly eventEmitter: EventEmitter2,
@@ -53,11 +55,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.join(WsRoomBuilder.presence(profileId)),
       ]);
 
-      const sockets = await this.server
-        .in(WsRoomBuilder.presence(profileId))
-        .fetchSockets();
+      const connections =
+        await this.presenceCacheService.incrementConnections(profileId);
 
-      if (sockets.length === 1) {
+      if (connections === 1) {
         this.eventEmitter.emit(
           PresenceEvents.USER_ONLINE,
           new UserOnlineEvent(profileId),
@@ -65,8 +66,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       console.log('[WS CONNECT]', {
-        profileId: user.profile.id,
+        profileId,
         socketId: client.id,
+        connections,
       });
     } catch (err) {
       console.log(err);
@@ -79,19 +81,29 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleDisconnect(client: AppSocket) {
+  async handleDisconnect(client: AppSocket) {
     const user = client.data.user;
 
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
-    this.eventEmitter.emit(
-      WsSystemEvents.DISCONNECTED,
-      new WsDisconnectedEvent(client, user.profile.id),
-    );
+    const profileId = user.profile.id;
+
+    const connections =
+      await this.presenceCacheService.decrementConnections(profileId);
+
+    if (connections === 0) {
+      this.eventEmitter.emit(
+        WsSystemEvents.DISCONNECTED,
+        new WsDisconnectedEvent(client, profileId),
+      );
+    }
 
     console.log('[WS DISCONNECT]', {
-      profileId: user.profile.id,
+      profileId,
       socketId: client.id,
+      connections,
     });
   }
 }

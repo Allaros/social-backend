@@ -36,4 +36,5 @@ export const MessagesEvents = {
 
 export const ChatEvents = {
   CHAT_MARKED_AS_DELETED: 'chat.marked-as-deleted',
+  CHAT_GROUP_CREATED: 'chat.group-created',
 };

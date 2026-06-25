@@ -17,6 +17,9 @@ import { ChatResponseBuilder } from '../builders/chat-response.builder';
 import { StorageService } from '@app/modules/file/services/storage.service';
 import { BucketName } from '@app/modules/file/types/file.interface';
 import { ChatEntity } from '../entities/chat.entity';
+import EventEmitter2 from 'eventemitter2';
+import { ChatEvents } from '@app/shared/events/domain-events';
+import { ChatGroupCreatedEvent } from '../events/chat-group-created.event';
 
 @Injectable()
 export class CreateGroupChatUseCase {
@@ -25,6 +28,7 @@ export class CreateGroupChatUseCase {
     private readonly chatCreationService: ChatCreationService,
     private readonly chatResponseBuilder: ChatResponseBuilder,
     private readonly storageService: StorageService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute(
@@ -32,12 +36,12 @@ export class CreateGroupChatUseCase {
 
     payload: CreateGroupChatDto,
   ) {
-    const invitedProfilesIds = payload.invitedProfilesIds;
+    const invitedProfileIds = payload.invitedProfileIds;
 
     const { existingProfiles, missingIds } =
       await this.chatParticipantsValidator.validateProfilesExist([
         initiatorId,
-        ...invitedProfilesIds,
+        ...invitedProfileIds,
       ]);
 
     let finallyMessage: string | null = null;
@@ -63,6 +67,7 @@ export class CreateGroupChatUseCase {
       isPublic: payload.isPublic ?? false,
       type: ChatTypeEnum.GROUP,
       slug: slugifiedTitle,
+      membersCount: invitedProfiles.length + 1,
     };
 
     const membersPayload: CreateChatMemberPayload[] = [
@@ -102,6 +107,15 @@ export class CreateGroupChatUseCase {
     }
 
     const avatarUrl = this.buildAvatarUrl(chat.avatarStorageKey);
+
+    this.eventEmitter.emit(
+      ChatEvents.CHAT_GROUP_CREATED,
+      new ChatGroupCreatedEvent({
+        chatId: chat.id,
+        invitedProfileIds: invitedProfileIds,
+        ownerId: initiatorId,
+      }),
+    );
 
     return this.chatResponseBuilder.buildCreationResponse({
       chat,

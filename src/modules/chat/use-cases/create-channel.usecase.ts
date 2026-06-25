@@ -38,6 +38,7 @@ export class CreateChannelUseCase {
       isPublic: payload.isPublic ?? false,
 
       slug: slugifiedTitle,
+      membersCount: 1,
     };
 
     const membersPayload: CreateChatMemberPayload[] = [
@@ -63,6 +64,7 @@ export class CreateChannelUseCase {
           isPublic: payload.isPublic ?? false,
 
           slug: generateUniqueSlug(payload.title),
+          membersCount: 1,
         };
 
         return await this.chatCreationService.create({

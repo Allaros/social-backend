@@ -16,6 +16,7 @@ export interface GroupChatInterface {
   slug: string;
   description?: string;
   avatarStorageKey?: string;
+  membersCount: number;
 }
 
 export interface ChannelInterface {
@@ -25,6 +26,7 @@ export interface ChannelInterface {
   slug: string;
   description?: string;
   avatarStorageKey?: string;
+  membersCount: number;
 }
 
 export interface DirectChatInterface {
