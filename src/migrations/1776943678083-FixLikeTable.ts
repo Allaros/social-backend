@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class LikesPolymorphicRefactor1700000000000 implements MigrationInterface {
-  name = 'LikesPolymorphicRefactor1700000000000';
+export class LikesPolymorphicRefactor1776943678083 implements MigrationInterface {
+  name = 'LikesPolymorphicRefactor1776943678083';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
