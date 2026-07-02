@@ -28,13 +28,14 @@ import {
 } from '../types/chat.dto';
 import { GetMyChatsUseCase } from '../use-cases/get-my-chats.usecase';
 import { GetActiveChatUseCase } from '../use-cases/get-active-chat.usecase';
-import { SetLastReadMessageUseCase } from '../use-cases/set-last-read-message';
+import { ReadMessagesUseCase } from '../use-cases/read-messages.usecase';
 import { DeleteDirectUseCase } from '../use-cases/delete-direct.usecase';
 import { GroupChatDeleteUseCase } from '../use-cases/group-chat-delete.usecase';
 import { ToggleChatNotificationsUseCase } from '../use-cases/toggle-chat-notifications.usecase';
 import { GetChatAvatarUploadUrlUseCase } from '../use-cases/get-chat-avatar-upload-url.usecase';
 import { GetParticipantsUseCase } from '../use-cases/get-participants.usecase';
 import { GetMemberToAddUseCase } from '../use-cases/get-members-to-add.usecase';
+import { GetUnreadStateUseCase } from '../use-cases/get-unread-state.usecase';
 
 @Controller('chats')
 @UseGuards(JwtAuthGuard, EmailVerifiedGuard)
@@ -46,13 +47,14 @@ export class ChatsController {
     private readonly createChannelUseCase: CreateChannelUseCase,
     private readonly getMyChatsUseCase: GetMyChatsUseCase,
     private readonly getActiveChatUseCase: GetActiveChatUseCase,
-    private readonly setLastReadMessageUseCase: SetLastReadMessageUseCase,
+    private readonly readMessagesUseCase: ReadMessagesUseCase,
     private readonly deleteDirectUseCase: DeleteDirectUseCase,
     private readonly groupChatDeleteUseCase: GroupChatDeleteUseCase,
     private readonly toggleChatNotificationsUseCase: ToggleChatNotificationsUseCase,
     private readonly getChatAvatarUploadUrlUseCase: GetChatAvatarUploadUrlUseCase,
     private readonly getParticipantsUseCase: GetParticipantsUseCase,
     private readonly getMemberToAddUseCase: GetMemberToAddUseCase,
+    private readonly getUnreadStateUseCase: GetUnreadStateUseCase,
   ) {}
 
   @Get('avatar-upload-url')
@@ -60,6 +62,11 @@ export class ChatsController {
     return await this.getChatAvatarUploadUrlUseCase.execute({
       mimeType,
     });
+  }
+
+  @Get('unread-state')
+  async getUnreadState(@CurrentUser() user: UserEntity) {
+    return await this.getUnreadStateUseCase.execute(user.profile.id);
   }
 
   @Get()
@@ -109,13 +116,13 @@ export class ChatsController {
   }
 
   @Put(':identifier/read')
-  setLastReadMessages(
+  readMessages(
     @Body() dto: SetLastReadMessageDto,
     @CurrentUser() user: UserEntity,
     @Param('identifier') identifier: string,
   ) {
     console.log('[SET_READ_MESSAGES_DTO]', dto);
-    return this.setLastReadMessageUseCase.execute({
+    return this.readMessagesUseCase.execute({
       chatIdentifier: identifier,
       currentProfileId: user.profile.id,
       lastMessageId: dto.lastMessageId,

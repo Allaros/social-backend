@@ -74,7 +74,6 @@ export class MessageCreationService {
         chatId,
         createdAt: message.createdAt,
         messageId: message.id,
-        excludedMemberIds: [senderMemberId],
         manager,
       });
 

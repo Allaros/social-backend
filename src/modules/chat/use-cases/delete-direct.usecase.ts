@@ -26,6 +26,9 @@ export class DeleteDirectUseCase {
     const chat = await this.resolveChatByIdentifierUseCase.execute({
       identifier: chatIdentifier,
       currentProfileId,
+      options: {
+        relations: ['members'],
+      },
     });
 
     if (chat.deletedAt) return;
@@ -42,9 +45,14 @@ export class DeleteDirectUseCase {
 
     await this.chatService.softDelete(chat.id);
 
+    const memberProfileIds = chat.members.map((member) => member.profileId);
+
     this.eventEmitter.emit(
       ChatEvents.CHAT_MARKED_AS_DELETED,
-      new ChatMarkedAsDeletedEvent({ chatId: chat.id }),
+      new ChatMarkedAsDeletedEvent({
+        chatId: chat.id,
+        receiverProfileIds: memberProfileIds,
+      }),
     );
   }
 }

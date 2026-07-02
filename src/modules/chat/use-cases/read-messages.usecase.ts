@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ChatMemberService } from '../services/chat-member.service';
 import { ResolveChatByIdentifierUseCase } from './resolve-chat-by-identifier.usecase';
+import EventEmitter2 from 'eventemitter2';
+import { MessagesEvents } from '@app/shared/events/domain-events';
+import { MessagesReadEvent } from '@app/modules/messages/events/messages-read.event';
 
 @Injectable()
-export class SetLastReadMessageUseCase {
+export class ReadMessagesUseCase {
   constructor(
     private readonly chatMemberService: ChatMemberService,
     private readonly resolveChatByIdentifierUseCase: ResolveChatByIdentifierUseCase,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute({
@@ -35,17 +39,18 @@ export class SetLastReadMessageUseCase {
 
     if (!member) throw new NotFoundException('Участник чата не найден');
 
-    const unreadCount = Math.max(
-      0,
-      member.unreadCount - uniqueMessageIds.length,
-    );
-
     if (!member.lastReadMessageId || member.lastReadMessageId < lastMessageId) {
-      await this.chatMemberService.setLastReadMessage(
-        lastMessageId,
-        member.id,
-        unreadCount,
-      );
+      await this.chatMemberService.setLastReadMessage(lastMessageId, member.id);
     }
+
+    this.eventEmitter.emit(
+      MessagesEvents.MESSAGES_READ,
+      new MessagesReadEvent({
+        memberId: member.id,
+        messageIds: uniqueMessageIds,
+        profileId: currentProfileId,
+        chatId: chat.id,
+      }),
+    );
   }
 }

@@ -10,9 +10,11 @@ import { UnrestrictMemberUseCase } from './use-cases/unrestrict-member.usecase';
 import { ProfileModule } from '../profile/profile.module';
 import { InitiateGroupChatUseCase } from './use-cases/initiate-group-chat.usecase';
 import { ChatCreationListener } from './listeners/chat-creation.listener';
+import { CountersSelfHealingService } from './services/counters-self-healing.service';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
-  imports: [MessagesModule, ChatModule, ProfileModule],
+  imports: [MessagesModule, ChatModule, ProfileModule, RedisModule],
   controllers: [ChatSystemController],
   providers: [
     MemberLeftChatUseCase,
@@ -22,6 +24,7 @@ import { ChatCreationListener } from './listeners/chat-creation.listener';
     UnrestrictMemberUseCase,
     InitiateGroupChatUseCase,
     ChatCreationListener,
+    CountersSelfHealingService,
   ],
 })
 export class ChatSystemModule {}

@@ -10,16 +10,24 @@ import { MessageAttachmentValidator } from '../validators/attachment.validator';
 import { MessageCreationService } from '../application/message-creation.service';
 import { ResolveChatByIdentifierUseCase } from '@app/modules/chat/use-cases/resolve-chat-by-identifier.usecase';
 import { MessageResponseBuilder } from '../builders/messages-response.builder';
+import EventEmitter2 from 'eventemitter2';
+import { MessagesEvents } from '@app/shared/events/domain-events';
+import { MessageCreatedEvent } from '../events/message-created.event';
+import { ChatMemberService } from '@app/modules/chat/services/chat-member.service';
+import { MessagesQueryService } from '../services/messages-query.service';
 
 @Injectable()
 export class CreateMessageUseCase {
   constructor(
     private readonly chatPermissionService: ChatPermissionService,
     private readonly messagesService: MessagesService,
+    private readonly messagesQueryService: MessagesQueryService,
     private readonly attachmentValidator: MessageAttachmentValidator,
     private readonly messageCreationService: MessageCreationService,
     private readonly resolveChatByIdentifier: ResolveChatByIdentifierUseCase,
     private readonly messageResponseBuilder: MessageResponseBuilder,
+    private readonly chatMemberService: ChatMemberService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute({
@@ -81,12 +89,32 @@ export class CreateMessageUseCase {
       clientId,
     });
 
-    return this.messageResponseBuilder.buildMessage(
-      message,
-      new Map(),
+    const members = await this.chatMemberService.getActiveMembers(chatId);
+
+    const receiverMemberIds = members
+      .filter((member) => member.id !== currentMember.id)
+      .map((member) => member.id);
+
+    this.eventEmitter.emit(
+      MessagesEvents.MESSAGE_CREATED,
+      new MessageCreatedEvent({
+        messageId: message.id,
+        receiverMemberIds,
+        actorId: currentProfileId,
+      }),
+    );
+
+    const fullMessage = await this.messagesQueryService.findRealtimeMessage(
+      message.id,
+    );
+
+    const result = await this.messageResponseBuilder.buildMessages(
+      [fullMessage!],
       currentProfileId,
       null,
     );
+
+    return result[0];
   }
 
   private async validateReplyMessage(

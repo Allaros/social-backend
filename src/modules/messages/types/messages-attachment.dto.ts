@@ -1,4 +1,4 @@
-import { IsString, IsInt } from 'class-validator';
+import { IsString, IsInt, IsOptional } from 'class-validator';
 
 export class MessageAttachmentDto {
   @IsString()
@@ -9,6 +9,18 @@ export class MessageAttachmentDto {
 
   @IsInt()
   size: number;
+
+  @IsOptional()
+  @IsInt()
+  width?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  height?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  duration?: number | null;
 }
 
 export class GetAttachmentUploadUrlDto {

@@ -81,6 +81,8 @@ export class GetMessagesUseCase {
         currentProfileId,
         lastReadMessageId,
       ),
+      chatId: chat.id,
+      lastReadMessageId,
       nextCursor,
     };
   }

@@ -8,7 +8,7 @@ import { CompositeCursorQueryHelper } from '@app/shared/cursor/helpers/composite
 
 type MessageCursor = {
   id: number;
-  createdAt: number;
+  createdAt: string;
 };
 
 const MESSAGE_CURSOR_CONFIG: CompositeCursorConfig<MessageCursor> = {
@@ -27,6 +27,30 @@ export class MessagesQueryService {
     @InjectRepository(MessageEntity)
     private readonly messageRepository: Repository<MessageEntity>,
   ) {}
+
+  async findRealtimeMessage(messageId: number) {
+    return this.messageRepository
+      .createQueryBuilder('message')
+
+      .leftJoinAndSelect('message.content', 'content')
+      .leftJoinAndSelect('message.attachments', 'attachments')
+
+      .leftJoinAndSelect('message.senderMember', 'senderMember')
+      .leftJoinAndSelect('senderMember.profile', 'senderProfile')
+
+      .leftJoinAndSelect('message.replyToMessage', 'reply')
+      .leftJoinAndSelect('reply.content', 'replyContent')
+      .leftJoinAndSelect('reply.senderMember', 'replySender')
+      .leftJoinAndSelect('replySender.profile', 'replySenderProfile')
+
+      .leftJoinAndSelect('message.forwardedFromMessage', 'forwarded')
+      .leftJoinAndSelect('forwarded.senderMember', 'forwardedSender')
+      .leftJoinAndSelect('forwardedSender.profile', 'forwardedSenderProfile')
+
+      .where('message.id = :messageId', { messageId })
+
+      .getOne();
+  }
 
   buildIdsQuery(chatId: number) {
     return this.messageRepository
@@ -162,7 +186,7 @@ export class MessagesQueryService {
     const nextCursor = hasNext
       ? messageCodec.encode({
           id: lastItem.message_id,
-          createdAt: new Date(lastItem.message_createdAt).getTime(),
+          createdAt: lastItem.message_createdAt,
         })
       : null;
 
@@ -176,5 +200,93 @@ export class MessagesQueryService {
     data.sort((a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!);
 
     return data;
+  }
+
+  async countUnreadMessages({
+    chatId,
+    lastReadMessageId,
+  }: {
+    chatId: number;
+    lastReadMessageId: number | null;
+  }) {
+    const qb = this.messageRepository.createQueryBuilder('message');
+
+    qb.where('message.chatId = :chatId', { chatId });
+
+    if (lastReadMessageId) {
+      qb.andWhere('message.id > :lastReadMessageId', {
+        lastReadMessageId,
+      });
+    }
+
+    return qb.getCount();
+  }
+
+  async findRealtimeLastVisibleMessage(chatId: number, chatMemberId: number) {
+    const { entities, raw } = await this.messageRepository
+      .createQueryBuilder('message')
+
+      .leftJoinAndSelect('message.content', 'content')
+      .leftJoinAndSelect('message.senderMember', 'sender')
+      .leftJoinAndSelect('sender.profile', 'profile')
+
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(*)')
+          .from('message_attachments', 'attachment')
+          .where('attachment."messageId" = message.id');
+      }, 'attachmentsCount')
+
+      .where('message."chatId" = :chatId', { chatId })
+
+      .andWhere('message."deletedAt" IS NULL')
+
+      .andWhere(
+        `
+      NOT EXISTS (
+        SELECT 1
+        FROM hidden_messages hm
+        WHERE hm."messageId" = message.id
+          AND hm."chatMemberId" = :chatMemberId
+      )
+      `,
+        { chatMemberId },
+      )
+
+      .andWhere(
+        `
+      (
+        NOT EXISTS (
+          SELECT 1
+          FROM chat_members member
+          WHERE member.id = :chatMemberId
+            AND member."leftAt" IS NOT NULL
+        )
+        OR message."createdAt" <= (
+          SELECT member."leftAt"
+          FROM chat_members member
+          WHERE member.id = :chatMemberId
+        )
+      )
+      `,
+        { chatMemberId },
+      )
+
+      .orderBy('message."createdAt"', 'DESC')
+      .addOrderBy('message.id', 'DESC')
+
+      .limit(1)
+
+      .getRawAndEntities();
+
+    if (!entities.length) {
+      return null;
+    }
+
+    return {
+      message: entities[0],
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      attachmentsCount: Number(raw[0].attachmentsCount),
+    };
   }
 }

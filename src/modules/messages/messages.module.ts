@@ -25,6 +25,12 @@ import { ForwardMessagesUseCase } from './use-cases/forward-messages.usecase';
 import { CleanupMessagesUseCase } from './use-cases/cleanup-messages.usecase';
 import { AttachmentCleanupService } from './application/attachments-cleanup.service';
 import { CreateSystemMessageUseCase } from './use-cases/create-system-message.usecase';
+import { RecalculateUnreadMessagesUseCase } from './use-cases/recalculate-unread-messages.usecase';
+import { MessagesActionsListener } from './listeners/messages-actions.listener';
+import { MessageRealtimeListener } from './listeners/message-realtime.listener';
+import { RealtimeMessagesChangeUseCase } from './use-cases/realtime-messages-change.usecase';
+import { WebsocketModule } from '../websocket/websocket.module';
+import { ProfileModule } from '../profile/profile.module';
 
 @Module({
   imports: [
@@ -36,6 +42,8 @@ import { CreateSystemMessageUseCase } from './use-cases/create-system-message.us
     ]),
     ChatModule,
     FileModule,
+    WebsocketModule,
+    ProfileModule,
   ],
   controllers: [MessagesController],
   providers: [
@@ -57,11 +65,16 @@ import { CreateSystemMessageUseCase } from './use-cases/create-system-message.us
     CleanupMessagesUseCase,
     AttachmentCleanupService,
     CreateSystemMessageUseCase,
+    RecalculateUnreadMessagesUseCase,
+    MessagesActionsListener,
+    MessageRealtimeListener,
+    RealtimeMessagesChangeUseCase,
   ],
   exports: [
     MessagesService,
     CleanupMessagesUseCase,
     CreateSystemMessageUseCase,
+    RecalculateUnreadMessagesUseCase,
   ],
 })
 export class MessagesModule {}

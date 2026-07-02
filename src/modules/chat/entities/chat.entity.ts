@@ -51,17 +51,20 @@ export class ChatEntity {
   @OneToMany(() => ChatMemberEntity, (member) => member.chat)
   members: ChatMemberEntity[];
 
-  @Column({ nullable: true })
-  lastMessageId?: number;
+  @Column({ type: 'integer', nullable: true })
+  lastMessageId: number | null;
 
   @Column({ type: 'timestamptz', nullable: true })
-  lastMessageAt?: Date;
+  lastMessageAt: Date | null;
 
   @Column({ default: 0 })
   messagesCount: number;
 
   @Column({ default: 0 })
   membersCount: number;
+
+  @Column({ default: false })
+  isInitialized: boolean;
 
   @Column({
     nullable: true,

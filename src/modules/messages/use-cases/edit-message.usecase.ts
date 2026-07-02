@@ -8,6 +8,9 @@ import { MessagesContentService } from '../services/messages-content.service';
 import { ResolveChatByIdentifierUseCase } from '@app/modules/chat/use-cases/resolve-chat-by-identifier.usecase';
 import { ChatPermissionService } from '@app/modules/chat/services/chat-permission.service';
 import { DataSource } from 'typeorm';
+import EventEmitter2 from 'eventemitter2';
+import { MessagesEvents } from '@app/shared/events/domain-events';
+import { MessageEditedEvent } from '../events/message-edited.event';
 
 @Injectable()
 export class EditMessageUseCase {
@@ -17,6 +20,7 @@ export class EditMessageUseCase {
     private readonly resolveChatByIdentifierUseCase: ResolveChatByIdentifierUseCase,
     private readonly chatPermissionService: ChatPermissionService,
     private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute({
@@ -119,5 +123,15 @@ export class EditMessageUseCase {
         manager,
       );
     });
+
+    this.eventEmitter.emit(
+      MessagesEvents.MESSAGE_EDITED,
+      new MessageEditedEvent({
+        actorId: currentProfileId,
+        chatId: chat.id,
+        messageId: message.id,
+        newText: content,
+      }),
+    );
   }
 }

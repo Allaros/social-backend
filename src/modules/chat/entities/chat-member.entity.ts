@@ -60,8 +60,8 @@ export class ChatMemberEntity {
   @Column({ default: false })
   isArchived: boolean;
 
-  @Column({ nullable: true })
-  lastReadMessageId?: number;
+  @Column({ type: 'integer', nullable: true })
+  lastReadMessageId: number | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   lastReadAt?: Date;

@@ -16,4 +16,12 @@ export class WsRoomBuilder {
   static presence(profileId: number) {
     return `${WsRoom.PRESENCE}:${profileId}`;
   }
+
+  static dialogs(profileId: number) {
+    return `dialogs:${profileId}`;
+  }
+
+  static chat(chatId: number) {
+    return `chat:${chatId}`;
+  }
 }

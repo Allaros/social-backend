@@ -33,8 +33,8 @@ export class MessagesAttachmentService {
       attachments.map((attachment) => {
         return {
           messageId: messageId,
-          ...attachment,
           type: resolveAttachmentType(attachment.mimeType),
+          ...attachment,
         };
       }),
     );

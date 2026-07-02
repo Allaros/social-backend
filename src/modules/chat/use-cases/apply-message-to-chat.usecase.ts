@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { ChatService } from '../services/chat.service';
-import { ChatMemberService } from '../services/chat-member.service';
 import { EntityManager } from 'typeorm';
-import { ChatQueryService } from '../services/chat-query.service';
+import { NotFoundError } from 'rxjs';
+import EventEmitter2 from 'eventemitter2';
+import { ChatEvents } from '@app/shared/events/domain-events';
+import { ChatInitializedEvent } from '../events/chat-initialized.event';
 
 @Injectable()
 export class ApplyMessageToChatUseCase {
   constructor(
-    private readonly chatQueryService: ChatQueryService,
     private readonly chatService: ChatService,
-    private readonly chatMemberService: ChatMemberService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute({
     chatId,
     messageId,
     createdAt,
-    excludedMemberIds,
     manager,
   }: {
     messageId: number;
@@ -25,7 +25,9 @@ export class ApplyMessageToChatUseCase {
     excludedMemberIds?: number[];
     manager?: EntityManager;
   }) {
-    const members = await this.getMembers(chatId, excludedMemberIds);
+    const chat = await this.chatService.findById(chatId);
+
+    if (!chat) throw new NotFoundError('Чат не найден');
 
     await this.chatService.updateLastMessage({
       chatId,
@@ -34,23 +36,15 @@ export class ApplyMessageToChatUseCase {
       manager,
     });
 
-    await this.chatMemberService.incrementUnreadCountByIds({
-      memberIds: members.map((member) => member.id),
-      manager,
-    });
-  }
+    if (!chat.isInitialized) {
+      await this.chatService.initializeChat(chatId, manager);
 
-  private async getMembers(chatId: number, excludedMemberIds?: number[]) {
-    const qb = this.chatQueryService.buildChatMembersQuery(chatId);
-
-    this.chatQueryService.applyActiveFilter(qb);
-
-    if (excludedMemberIds) {
-      this.chatQueryService.applyExcludedMembersFilter(qb, excludedMemberIds);
+      this.eventEmitter.emit(
+        ChatEvents.CHAT_INITIALIZED,
+        new ChatInitializedEvent({
+          chatId,
+        }),
+      );
     }
-
-    const chatMembers = await qb.getMany();
-
-    return chatMembers;
   }
 }

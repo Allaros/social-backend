@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
@@ -16,7 +20,7 @@ import { PresenceEvents } from '@app/shared/events/domain-events';
 import { UnauthorizedException } from '@nestjs/common';
 import { WsSystemEvents } from '@app/shared/events/ws-events';
 import { WsDisconnectedEvent } from '../events/ws-disconnected.event';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
@@ -53,6 +57,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.join(WsRoomBuilder.notifications(profileId)),
         client.join(WsRoomBuilder.profile(profileId)),
         client.join(WsRoomBuilder.presence(profileId)),
+        client.join(WsRoomBuilder.dialogs(profileId)),
       ]);
 
       const connections =
@@ -104,6 +109,39 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       profileId,
       socketId: client.id,
       connections,
+    });
+  }
+
+  @SubscribeMessage('chat:join')
+  async joinChat(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() dto: { chatId: number },
+  ) {
+    const room = WsRoomBuilder.chat(dto.chatId);
+
+    await socket.join(room);
+
+    console.log('[CHAT JOIN]', {
+      socketId: socket.id,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      profileId: socket.data.user.profile.id,
+      room,
+    });
+  }
+
+  @SubscribeMessage('chat:leave')
+  async leaveChat(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() dto: { chatId: number },
+  ) {
+    const room = WsRoomBuilder.chat(dto.chatId);
+    await socket.leave(room);
+
+    console.log('[CHAT LEAVE]', {
+      socketId: socket.id,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      profileId: socket.data.user.profile.id,
+      room,
     });
   }
 }

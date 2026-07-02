@@ -242,4 +242,19 @@ LIMIT 1
 
     return qb;
   }
+
+  async findChatForRealtimeList(chatId: number, profileId: number) {
+    const qb = this.buildBaseQuery();
+
+    qb.where('member.profileId = :profileId', { profileId });
+
+    qb.andWhere('chat.id = :chatId', { chatId });
+
+    qb.andWhere('chat.deletedAt IS NULL');
+
+    this.applyProfileJoin(qb);
+    this.applyLastVisibleMessageJoin(qb);
+
+    return qb.getRawAndEntities();
+  }
 }

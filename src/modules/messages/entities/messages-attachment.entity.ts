@@ -42,17 +42,17 @@ export class MessageAttachmentEntity {
   @Column()
   size: number;
 
-  @Column({ nullable: true })
-  width?: number;
+  @Column({ type: 'integer', nullable: true })
+  width: number | null;
 
-  @Column({ nullable: true })
-  height?: number;
+  @Column({ type: 'integer', nullable: true })
+  height: number | null;
 
-  @Column({ nullable: true })
-  duration?: number;
+  @Column({ type: 'integer', nullable: true })
+  duration: number | null;
 
-  @Column({ nullable: true })
-  thumbnailKey?: string;
+  @Column({ type: 'varchar', nullable: true })
+  thumbnailKey: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

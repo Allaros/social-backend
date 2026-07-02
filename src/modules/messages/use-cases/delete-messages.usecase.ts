@@ -8,6 +8,9 @@ import EventEmitter2 from 'eventemitter2';
 import { MessagesEvents } from '@app/shared/events/domain-events';
 import { MessageDeletedEvent } from '../events/message-deleted.event';
 import { MessageEntity } from '../entities/messages.entity';
+import { ChatMemberService } from '@app/modules/chat/services/chat-member.service';
+import { ChatService } from '@app/modules/chat/services/chat.service';
+import { ChatEntity } from '@app/modules/chat/entities/chat.entity';
 
 @Injectable()
 export class DeleteMessagesUseCase {
@@ -16,6 +19,8 @@ export class DeleteMessagesUseCase {
     private readonly messagesContentService: MessagesContentService,
     private readonly resolveChatByIdentifierUseCase: ResolveChatByIdentifierUseCase,
     private readonly chatPermissionService: ChatPermissionService,
+    private readonly chatMemberService: ChatMemberService,
+    private readonly chatService: ChatService,
     private readonly dataSource: DataSource,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -81,7 +86,23 @@ export class DeleteMessagesUseCase {
         finalMessagesIds,
         manager,
       );
+
+      const lastMessage = await this.messagesService.getLastMessage(
+        chat.id,
+        manager,
+      );
+
+      await manager.getRepository(ChatEntity).update(chat.id, {
+        lastMessageId: lastMessage?.id ?? null,
+        lastMessageAt: lastMessage?.createdAt ?? null,
+      });
     });
+
+    const members = await this.chatMemberService.getActiveMembers(chat.id);
+
+    const receiverMemberIds = members
+      .filter((member) => member.id !== member.id)
+      .map((member) => member.id);
 
     this.eventEmitter.emit(
       MessagesEvents.MESSAGE_DELETED,
@@ -89,6 +110,9 @@ export class DeleteMessagesUseCase {
         messageIds: finalMessagesIds,
         attachmentsIds,
         chatId: chat.id,
+        actorMemberId: member.id,
+        actorProfileId: currentProfileId,
+        receiverMemberIds,
       }),
     );
   }

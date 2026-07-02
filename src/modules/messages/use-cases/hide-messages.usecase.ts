@@ -3,6 +3,9 @@ import { HideMessagesService } from '../services/hide-messages.service';
 import { ResolveChatByIdentifierUseCase } from '@app/modules/chat/use-cases/resolve-chat-by-identifier.usecase';
 import { ChatPermissionService } from '@app/modules/chat/services/chat-permission.service';
 import { MessagesService } from '../services/messages.service';
+import EventEmitter2 from 'eventemitter2';
+import { MessagesEvents } from '@app/shared/events/domain-events';
+import { MessagesHideEvent } from '../events/messages-hide.event';
 
 @Injectable()
 export class HideMessagesUseCase {
@@ -11,6 +14,7 @@ export class HideMessagesUseCase {
     private readonly resolveChatByIdentifierUseCase: ResolveChatByIdentifierUseCase,
     private readonly chatPermissionService: ChatPermissionService,
     private readonly messagesService: MessagesService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute({
@@ -41,5 +45,14 @@ export class HideMessagesUseCase {
     await this.messagesService.ensureMessagesBelongsToChat(chat.id, messageIds);
 
     await this.hideMessagesService.create({ memberId: member.id, messageIds });
+
+    this.eventEmitter.emit(
+      MessagesEvents.MESSAGES_HIDED,
+      new MessagesHideEvent({
+        actorProfileId: currentProfileId,
+        chatId: chat.id,
+        messageIds,
+      }),
+    );
   }
 }

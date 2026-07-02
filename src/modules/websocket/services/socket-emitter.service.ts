@@ -24,4 +24,18 @@ export class SocketEmitterService {
   emitToNotifications<T>(profileId: number, event: string, payload: T) {
     this.emitToRoom(WsRoomBuilder.notifications(profileId), event, payload);
   }
+
+  emitToDialogs(profileId: number, event: string, payload: unknown) {
+    this.emitToRoom(WsRoomBuilder.dialogs(profileId), event, payload);
+  }
+
+  emitToChat(chatId: number, event: string, payload: unknown) {
+    const room = WsRoomBuilder.chat(chatId);
+    this.emitToRoom(room, event, payload);
+
+    console.log('[EMIT CHAT]', {
+      room,
+      event,
+    });
+  }
 }

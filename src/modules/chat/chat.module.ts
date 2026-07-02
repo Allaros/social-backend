@@ -20,7 +20,7 @@ import { GetMyChatsUseCase } from './use-cases/get-my-chats.usecase';
 import { ResolveChatByIdentifierUseCase } from './use-cases/resolve-chat-by-identifier.usecase';
 import { WebsocketModule } from '../websocket/websocket.module';
 import { GetActiveChatUseCase } from './use-cases/get-active-chat.usecase';
-import { SetLastReadMessageUseCase } from './use-cases/set-last-read-message';
+import { ReadMessagesUseCase } from './use-cases/read-messages.usecase';
 import { DeleteDirectUseCase } from './use-cases/delete-direct.usecase';
 import { GroupChatDeleteUseCase } from './use-cases/group-chat-delete.usecase';
 import { ChatRestrictionSchedulerService } from './application/chat-restriction-scheduler.service';
@@ -30,6 +30,11 @@ import { GetParticipantsUseCase } from './use-cases/get-participants.usecase';
 import { ChatMemberQueryService } from './services/chat-member-query.service';
 import { ChatMemberResponseBuilder } from './builders/chat-member-response.builder';
 import { GetMemberToAddUseCase } from './use-cases/get-members-to-add.usecase';
+import { GetUnreadStateUseCase } from './use-cases/get-unread-state.usecase';
+import { ChatUnreadStateListener } from './listeners/chat-unread-state.listener';
+import { ChatRealtimeListener } from './listeners/chat-realtime.listener';
+import { RealtimeChatControlUseCase } from './use-cases/realtime-chat-control.usecase';
+import { ChatExistenceListener } from './listeners/chat-existence.listener';
 
 @Module({
   imports: [
@@ -54,7 +59,7 @@ import { GetMemberToAddUseCase } from './use-cases/get-members-to-add.usecase';
     GetMyChatsUseCase,
     ResolveChatByIdentifierUseCase,
     GetActiveChatUseCase,
-    SetLastReadMessageUseCase,
+    ReadMessagesUseCase,
     DeleteDirectUseCase,
     GroupChatDeleteUseCase,
     ChatRestrictionSchedulerService,
@@ -64,6 +69,11 @@ import { GetMemberToAddUseCase } from './use-cases/get-members-to-add.usecase';
     ChatMemberQueryService,
     ChatMemberResponseBuilder,
     GetMemberToAddUseCase,
+    GetUnreadStateUseCase,
+    ChatUnreadStateListener,
+    ChatRealtimeListener,
+    RealtimeChatControlUseCase,
+    ChatExistenceListener,
   ],
   exports: [
     ChatService,

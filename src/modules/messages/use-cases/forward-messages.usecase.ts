@@ -9,7 +9,9 @@ import { MessageContentEntity } from '../entities/messages-content.entity';
 import { ApplyMessageToChatUseCase } from '@app/modules/chat/use-cases/apply-message-to-chat.usecase';
 import { MessageEntity } from '../entities/messages.entity';
 import { ForwardPayload } from '../types/messages.interface';
-import { MessageResponseBuilder } from '../builders/messages-response.builder';
+import EventEmitter2 from 'eventemitter2';
+import { MessagesEvents } from '@app/shared/events/domain-events';
+import { MessageCreatedEvent } from '../events/message-created.event';
 
 @Injectable()
 export class ForwardMessagesUseCase {
@@ -21,7 +23,7 @@ export class ForwardMessagesUseCase {
     private readonly messagesContentService: MessagesContentService,
     private readonly dataSource: DataSource,
     private readonly applyMessageToChatUseCase: ApplyMessageToChatUseCase,
-    private readonly messageResponseBuilder: MessageResponseBuilder,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async execute({
@@ -36,6 +38,9 @@ export class ForwardMessagesUseCase {
     const chat = await this.resolveChatByIdentifierUseCase.execute({
       currentProfileId,
       identifier: chatIdentifier,
+      options: {
+        relations: ['members'],
+      },
     });
 
     const member = await this.chatPermissionService.ensureMember({
@@ -103,6 +108,9 @@ export class ForwardMessagesUseCase {
                 mimeType: attachment.mimeType,
                 size: attachment.size,
                 storageKey: attachment.storageKey,
+                duration: attachment.duration,
+                height: attachment.height,
+                width: attachment.width,
               })),
               messageId: newMessage.id,
               manager,
@@ -123,7 +131,6 @@ export class ForwardMessagesUseCase {
             chatId: chat.id,
             createdAt: lastMessage.createdAt,
             messageId: lastMessage.id,
-            excludedMemberIds: [member.id],
             manager,
           });
         }
@@ -131,6 +138,21 @@ export class ForwardMessagesUseCase {
         return created;
       },
     );
+
+    const receiverIds = chat.members.filter(
+      (receiver) => receiver.id !== member.id,
+    );
+
+    createdMessages.forEach((message) => {
+      this.eventEmitter.emit(
+        MessagesEvents.MESSAGE_CREATED,
+        new MessageCreatedEvent({
+          actorId: currentProfileId,
+          messageId: message.id,
+          receiverMemberIds: receiverIds.map((receiver) => receiver.id),
+        }),
+      );
+    });
 
     return createdMessages;
   }

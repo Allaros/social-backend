@@ -48,3 +48,19 @@ export type ChatListItem = {
   isMuted: boolean;
   membersCount: number;
 };
+
+export type LastMessagePreview = {
+  text: string | null;
+  senderName: string | null;
+  senderAvatarUrl: string | null;
+  createdAt: string | null;
+  attachmentsCount: number;
+};
+
+export enum ChatStateUpdateType {
+  CREATE = 'create',
+  DELETE = 'delete',
+  EDIT = 'edit',
+  READ = 'read',
+  HIDE = 'hide',
+}

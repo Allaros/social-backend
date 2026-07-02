@@ -1,19 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ChatEntity } from '../entities/chat.entity';
 import { ChatMemberEntity } from '../entities/chat-member.entity';
-import { ChatListItem, ChatTypeEnum } from '../types/chat.interface';
+import {
+  ChatListItem,
+  ChatTypeEnum,
+  LastMessagePreview,
+} from '../types/chat.interface';
 import { StorageService } from '@app/modules/file/services/storage.service';
 import { BucketName } from '@app/modules/file/types/file.interface';
 import { ProfileEntity } from '@app/modules/profile/entities/profile.entity';
 import { SELF_CHAT_KEY_PREFIX } from './chat-key.builder';
-
-type LastMessagePreview = {
-  text: string | null;
-  senderName: string | null;
-  senderAvatarUrl: string | null;
-  createdAt: string | null;
-  attachmentsCount: number;
-};
 
 @Injectable()
 export class ChatResponseBuilder {
@@ -112,6 +108,64 @@ export class ChatResponseBuilder {
         isDeleted: chat.deletedAt,
       };
     });
+  }
+
+  buildChatListItem({
+    member,
+    targetProfile,
+    lastMessage,
+    isOnline,
+  }: {
+    member: ChatMemberEntity;
+    targetProfile: ProfileEntity | null;
+    lastMessage: LastMessagePreview | null;
+    isOnline: boolean;
+  }) {
+    const chat = member.chat;
+
+    const isDirectChat = chat.type === ChatTypeEnum.DIRECT;
+
+    const isSelfChat =
+      isDirectChat && chat.directKey?.startsWith(SELF_CHAT_KEY_PREFIX);
+
+    const title = isSelfChat
+      ? 'Saved messages'
+      : isDirectChat
+        ? (targetProfile?.name ?? 'Unknown user')
+        : (chat.title ?? null);
+
+    const avatarUrl = isSelfChat
+      ? null
+      : isDirectChat
+        ? (targetProfile?.avatarUrl ?? null)
+        : chat.avatarStorageKey
+          ? this.storageService.getPublicUrlFromKey(
+              BucketName.CHAT_AVATARS,
+              chat.avatarStorageKey,
+            )
+          : null;
+
+    return {
+      id: chat.id,
+      type: chat.type,
+      title,
+      avatarUrl,
+      isPublic: chat.isPublic,
+      unreadCount: member.unreadCount,
+      isPinned: member.isPinned,
+      isMuted: member.isNotificationsMuted,
+      membersCount: chat.membersCount,
+      lastMessageAt: chat.lastMessageAt?.toISOString() ?? null,
+      lastMessage: lastMessage
+        ? {
+            ...lastMessage,
+            text: this.resolveLastMessageText(lastMessage),
+          }
+        : null,
+      isOnline,
+      identifier: this.resolveIdentifier(chat, targetProfile),
+      isDeleted: chat.deletedAt,
+    };
   }
 
   buildSingleChat({

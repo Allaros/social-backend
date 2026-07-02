@@ -47,6 +47,7 @@ export class ChatsCleanupService {
         ChatEvents.CHAT_MARKED_AS_DELETED,
         new ChatMarkedAsDeletedEvent({
           chatId,
+          receiverProfileIds: [],
         }),
       );
     }

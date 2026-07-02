@@ -105,6 +105,19 @@ export class MessagesService {
     });
   }
 
+  async findOne(
+    messageId: number,
+    manager?: EntityManager,
+    relations?: Array<'attachments' | 'content'>,
+  ) {
+    return await this.getRepo(manager).findOne({
+      where: {
+        id: messageId,
+      },
+      relations,
+    });
+  }
+
   async messagesDelete(
     chatId: number,
     messageIds: number[],
@@ -164,5 +177,20 @@ export class MessagesService {
       .getRawMany<{ id: number }>();
 
     return rows.map((row) => Number(row.id));
+  }
+
+  async getLastMessage(chatId: number, manager: EntityManager) {
+    return manager
+      .getRepository(MessageEntity)
+      .createQueryBuilder('message')
+      .leftJoinAndSelect('message.content', 'content')
+      .leftJoinAndSelect('message.attachments', 'attachments')
+      .leftJoinAndSelect('message.senderMember', 'senderMember')
+      .leftJoinAndSelect('senderMember.profile', 'profile')
+      .where('message.chatId = :chatId', { chatId })
+      .andWhere('message.deletedAt IS NULL')
+      .orderBy('message.createdAt', 'DESC')
+      .limit(1)
+      .getOne();
   }
 }
